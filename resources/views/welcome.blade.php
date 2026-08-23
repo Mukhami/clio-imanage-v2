@@ -40,34 +40,34 @@
         {{-- Structured data --}}
         <script type="application/ld+json">
         {
-            "@context": "https://schema.org",
-            "@graph": [
+            "@@context": "https://schema.org",
+            "@@graph": [
                 {
-                    "@type": "Organization",
-                    "@id": "{{ config('app.url') }}/#organization",
+                    "@@type": "Organization",
+                    "@@id": "{{ config('app.url') }}/#organization",
                     "name": "MatterLynk",
                     "url": "{{ config('app.url') }}",
                     "logo": {
-                        "@type": "ImageObject",
+                        "@@type": "ImageObject",
                         "url": "{{ config('app.url') }}/logo/png/matterlynk-horizontal-dark-1200.png"
                     },
                     "contactPoint": {
-                        "@type": "ContactPoint",
+                        "@@type": "ContactPoint",
                         "contactType": "sales",
                         "url": "{{ config('app.url') }}/enquiry"
                     }
                 },
                 {
-                    "@type": "SoftwareApplication",
-                    "@id": "{{ config('app.url') }}/#software",
+                    "@@type": "SoftwareApplication",
+                    "@@id": "{{ config('app.url') }}/#software",
                     "name": "MatterLynk",
                     "applicationCategory": "BusinessApplication",
                     "operatingSystem": "Web",
                     "description": "MatterLynk synchronises your Clio matters to iManage workspaces in real time. Automatic workspace creation, group security mapping, and field mapping — zero manual filing.",
                     "url": "{{ config('app.url') }}",
-                    "provider": { "@id": "{{ config('app.url') }}/#organization" },
+                    "provider": { "@@id": "{{ config('app.url') }}/#organization" },
                     "offers": {
-                        "@type": "Offer",
+                        "@@type": "Offer",
                         "availability": "https://schema.org/InStock",
                         "url": "{{ config('app.url') }}/enquiry"
                     },
@@ -82,11 +82,11 @@
                     ]
                 },
                 {
-                    "@type": "WebSite",
-                    "@id": "{{ config('app.url') }}/#website",
+                    "@@type": "WebSite",
+                    "@@id": "{{ config('app.url') }}/#website",
                     "url": "{{ config('app.url') }}",
                     "name": "MatterLynk",
-                    "publisher": { "@id": "{{ config('app.url') }}/#organization" }
+                    "publisher": { "@@id": "{{ config('app.url') }}/#organization" }
                 }
             ]
         }
