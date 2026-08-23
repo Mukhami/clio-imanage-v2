@@ -23,44 +23,178 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
-    --color-accent: var(--color-neutral-800);
-    --color-accent-content: var(--color-neutral-800);
-    --color-accent-foreground: var(--color-white);
+    /* ── MatterLynk brand colors ─────────────────────────────────────────── */
+
+    /* Depth (indigo) — darkest neutral / dark-mode base */
+    --color-depth-50:  #ecebef;
+    --color-depth-100: #d8d7df;
+    --color-depth-200: #b1afbf;
+    --color-depth-300: #8a879f;
+    --color-depth-400: #5a5676;
+    --color-depth-500: #0c0636;
+    --color-depth-600: #09052a;
+    --color-depth-700: #07031f;
+    --color-depth-800: #050215;
+    --color-depth-900: #02010b;
+    --color-depth-950: #010004;
+
+    /* Core (teal) — primary interactive color */
+    --color-core-50:  #ebf7f7;
+    --color-core-100: #d7efef;
+    --color-core-200: #afdfdf;
+    --color-core-300: #87cfcf;
+    --color-core-400: #55bbba;
+    --color-core-500: #059b9a;
+    --color-core-600: #077a84;
+    --color-core-700: #085c70;
+    --color-core-800: #093f5c;
+    --color-core-900: #0b244a;
+    --color-core-950: #0b123e;
+
+    /* Growth (green) — secondary accent / success */
+    --color-growth-50:  #f1f9f5;
+    --color-growth-100: #e3f4eb;
+    --color-growth-200: #c8e9d7;
+    --color-growth-300: #acdec3;
+    --color-growth-400: #8ad0ab;
+    --color-growth-500: #53ba83;
+    --color-growth-600: #439272;
+    --color-growth-700: #356e63;
+    --color-growth-800: #274a53;
+    --color-growth-900: #1a2a45;
+    --color-growth-950: #12143c;
+
+    /* Structure (dark teal) */
+    --color-structure:      #095169;
+    --color-structure-soft: #e6eef0;
+    --color-structure-dark: #0a3355;
+
+    /* Signal (lime) */
+    --color-signal:      #9fd96b;
+    --color-signal-soft: #f2faea;
+    --color-signal-deep: #6c8f58;
+
+    /* Semantic */
+    --color-ml-success:       #53ba83;
+    --color-ml-success-strong:#356e63;
+    --color-ml-success-soft:  #f1f9f5;
+    --color-ml-warning:       #eaa32a;
+    --color-ml-warning-soft:  #faebd1;
+    --color-ml-error:         #da4e3e;
+    --color-ml-error-strong:  #c53526;
+    --color-ml-error-soft:    #f8e0dd;
+
+    /* Brand neutrals (cool indigo-tinted grays) */
+    --color-neutral-50:  #f9f9fb;
+    --color-neutral-100: #f1f0f4;
+    --color-neutral-200: #e3e2e9;
+    --color-neutral-300: #cccbd8;
+    --color-neutral-400: #aaa8bd;
+    --color-neutral-500: #8985a3;
+    --color-neutral-600: #696586;
+    --color-neutral-700: #4e4b63;
+    --color-neutral-800: #323040;
+    --color-neutral-900: #201f29;
+    --color-neutral-950: #121217;
+
+    /* Flux accent — core-600 for primary CTA */
+    --color-accent:          #077a84;
+    --color-accent-content:  #077a84;
+    --color-accent-foreground: #ffffff;
 }
 
 @layer theme {
     .dark {
-        --color-accent: var(--color-white);
-        --color-accent-content: var(--color-white);
-        --color-accent-foreground: var(--color-neutral-800);
+        --color-accent:           #55bbba; /* core-400 — readable on dark surfaces */
+        --color-accent-content:   #55bbba;
+        --color-accent-foreground:#07031f; /* depth-700 */
     }
 }
 
 @layer base {
-
     *,
     ::after,
     ::before,
     ::backdrop,
     ::file-selector-button {
-        border-color: var(--color-gray-200, currentColor);
+        border-color: var(--color-neutral-200, currentColor);
     }
 }
+
+/* ── Flux field overrides ─────────────────────────────────────────────────── */
 
 [data-flux-field]:not(ui-radio, ui-checkbox) {
     @apply grid gap-2;
 }
 
 [data-flux-label] {
-    @apply  !mb-0 !leading-tight;
+    @apply !mb-0 !leading-tight;
 }
 
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+    @apply outline-hidden ring-2 ring-core-400 ring-offset-2 ring-offset-white dark:ring-offset-depth-600;
 }
 
-/* \[:where(&)\]:size-4 {
-    @apply size-4;
-} */
+/* ── Sidebar nav ──────────────────────────────────────────────────────────── */
+
+/* Default sidebar item: white at 80% opacity */
+[data-flux-sidebar-item],
+[data-flux-sidebar-item] * {
+    color: rgba(255, 255, 255, 0.80) !important;
+}
+
+/* Hover (non-active): full white + subtle wash */
+[data-flux-sidebar-item]:not([data-current]):hover,
+[data-flux-sidebar-item]:not([data-current]):hover * {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: #ffffff !important;
+}
+
+/* Active item: Flux uses data-current attribute (not aria-current) */
+[data-flux-sidebar-item][data-current],
+[data-flux-sidebar-item][data-current] * {
+    background-color: transparent !important;
+    border-left: none !important;
+    color: #55bbba !important;
+}
+
+[data-flux-sidebar-item][data-current] {
+    background-color: rgba(5, 155, 154, 0.12) !important;
+    border-left: 2px solid #55bbba !important;
+}
+
+/* Active item hover: stay teal, slightly stronger wash */
+[data-flux-sidebar-item][data-current]:hover,
+[data-flux-sidebar-item][data-current]:hover * {
+    background-color: transparent !important;
+    color: #55bbba !important;
+}
+
+[data-flux-sidebar-item][data-current]:hover {
+    background-color: rgba(5, 155, 154, 0.18) !important;
+}
+
+/* Sidebar group headings */
+[data-flux-sidebar-group-heading],
+[data-flux-sidebar-group-heading] * {
+    color: rgba(255, 255, 255, 0.40) !important;
+}
+
+/* Sidebar profile (user menu at bottom) */
+[data-flux-sidebar-profile] > span {
+    color: rgba(255, 255, 255, 0.80) !important;
+}
+
+[data-flux-sidebar-profile]:hover > span {
+    color: #ffffff !important;
+}
+
+[data-flux-sidebar-profile] svg {
+    color: rgba(255, 255, 255, 0.50) !important;
+}
+
+[data-flux-sidebar-profile]:hover svg {
+    color: rgba(255, 255, 255, 0.80) !important;
+}

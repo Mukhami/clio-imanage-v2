@@ -3,10 +3,12 @@
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-white dark:bg-zinc-800">
-        <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+    <body class="min-h-screen bg-neutral-50 dark:bg-depth-700">
+        <flux:sidebar sticky collapsible="mobile" class="border-e border-depth-400/20 bg-depth-500 dark:bg-depth-800">
             <flux:sidebar.header>
-                <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
+                <a href="{{ route('admin.dashboard') }}" wire:navigate class="flex items-center px-1 py-2">
+                    <img src="/logo/png/matterlynk-horizontal-dark-1200.png" alt="{{ config('app.name', 'MatterLynk') }}" class="h-7 w-auto" />
+                </a>
                 <flux:sidebar.collapse class="lg:hidden" />
             </flux:sidebar.header>
 

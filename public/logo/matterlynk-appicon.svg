@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160"><defs><linearGradient id="mlGrad" x1="4" y1="60" x2="152" y2="60" gradientUnits="userSpaceOnUse">
+  <stop offset="0%" stop-color="#0c0636" />
+  <stop offset="25%" stop-color="#095169" />
+  <stop offset="50%" stop-color="#059b9a" />
+  <stop offset="75%" stop-color="#53ba83" />
+  <stop offset="100%" stop-color="#9fd96b" />
+</linearGradient></defs><rect x="0" y="0" width="160" height="160" rx="34" fill="#0c0636" /><g transform="translate(30.39999999999999,41.84615384615384) scale(0.635897435897436)"><rect x="12" y="38" width="72" height="44" rx="22" fill="none" stroke="url(#mlGrad)" stroke-width="16" stroke-linecap="round" /><rect x="72" y="38" width="72" height="44" rx="22" fill="none" stroke="url(#mlGrad)" stroke-width="16" stroke-linecap="round" /></g></svg>
