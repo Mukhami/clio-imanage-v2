@@ -98,7 +98,7 @@
             <div class="border-b border-zinc-200 dark:border-zinc-700 px-6 py-4">
                 <p class="text-xs font-semibold uppercase tracking-wider text-neutral-400">Subscription</p>
             </div>
-            @if ($subscription)
+            @if ($subscription && ! $subscription->end_date->isPast())
                 <dl class="grid grid-cols-2 divide-y divide-zinc-100 dark:divide-zinc-800 sm:grid-cols-4 sm:divide-y-0 sm:divide-x">
                     <div class="px-6 py-5">
                         <dt class="text-xs text-neutral-500">Plan</dt>
@@ -114,19 +114,28 @@
                     </div>
                     <div class="px-6 py-5">
                         <dt class="text-xs text-neutral-500">Expires</dt>
-                        <dd class="mt-1 text-sm {{ $subscription->end_date->isPast() ? 'text-ml-error' : ($subscription->end_date->diffInDays() <= 30 ? 'text-ml-warning' : 'text-zinc-900 dark:text-white') }}">
+                        <dd class="mt-1 text-sm {{ $subscription->end_date->diffInDays() <= 30 ? 'text-ml-warning' : 'text-zinc-900 dark:text-white' }}">
                             {{ $subscription->end_date->format('d M Y') }}
-                            @if ($subscription->end_date->isPast())
-                                <span class="ml-1 text-xs">(expired)</span>
-                            @elseif ($subscription->end_date->diffInDays() <= 30)
+                            @if ($subscription->end_date->diffInDays() <= 30)
                                 <span class="ml-1 text-xs">({{ $subscription->end_date->diffForHumans() }})</span>
                             @endif
                         </dd>
                     </div>
                 </dl>
             @else
-                <div class="px-6 py-8 text-center">
-                    <p class="text-sm text-neutral-500">No active subscription found. Please contact support.</p>
+                <div class="flex flex-col items-center gap-4 px-6 py-10 text-center sm:flex-row sm:justify-between sm:text-left">
+                    <div>
+                        @if ($subscription)
+                            <p class="text-sm font-medium text-zinc-900 dark:text-white">Your subscription expired on {{ $subscription->end_date->format('d M Y') }}.</p>
+                            <p class="mt-1 text-sm text-neutral-500">Renew your subscription to continue using MatterLynk without interruption.</p>
+                        @else
+                            <p class="text-sm font-medium text-zinc-900 dark:text-white">No active subscription found.</p>
+                            <p class="mt-1 text-sm text-neutral-500">Get in touch with our team to set up or restore your subscription.</p>
+                        @endif
+                    </div>
+                    <flux:button href="{{ route('enquiry') }}" variant="primary" class="shrink-0">
+                        Contact Us
+                    </flux:button>
                 </div>
             @endif
         </div>
