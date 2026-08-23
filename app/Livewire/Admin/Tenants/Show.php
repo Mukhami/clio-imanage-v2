@@ -23,7 +23,13 @@ class Show extends Component
 
     public function mount(int $id): void
     {
-        $this->tenant = Tenant::with(['clioLocation', 'tenantSubscriptions' => fn ($q) => $q->latest()->limit(1)])->findOrFail($id);
+        $this->tenant = Tenant::with([
+            'clioLocation',
+            'tenantSubscriptions'     => fn ($q) => $q->latest()->limit(1),
+            'clioOAuthAccessTokens'   => fn ($q) => $q->where('revoked', false),
+            'imanageOAuthAccessTokens'=> fn ($q) => $q->where('revoked', false),
+            'webhooks.webhookType',
+        ])->findOrFail($id);
     }
 
     // -------------------------------------------------------------------------
@@ -33,19 +39,17 @@ class Show extends Component
     #[Computed]
     public function clioConnected(): bool
     {
-        return $this->tenant->clioOAuthAccessTokens()
-            ->where('revoked', false)
+        return $this->tenant->clioOAuthAccessTokens
             ->where('access_expires_at', '>', now())
-            ->exists();
+            ->isNotEmpty();
     }
 
     #[Computed]
     public function imanageConnected(): bool
     {
-        return $this->tenant->imanageOAuthAccessTokens()
-            ->where('revoked', false)
+        return $this->tenant->imanageOAuthAccessTokens
             ->where('expires_at', '>', now())
-            ->exists();
+            ->isNotEmpty();
     }
 
     #[Computed]
@@ -57,7 +61,7 @@ class Show extends Component
     #[Computed]
     public function tenantWebhooks(): Collection
     {
-        return $this->tenant->webhooks()->with('webhookType')->orderBy('webhook_type_id')->get();
+        return $this->tenant->webhooks->sortBy('webhook_type_id');
     }
 
     // -------------------------------------------------------------------------

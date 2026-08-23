@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Notifications;
 
-use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -39,7 +39,11 @@ class Index extends Component
     #[Computed]
     public function unreadCount(): int
     {
-        return auth()->user()->unreadNotifications()->count();
+        return Cache::remember(
+            'user.' . auth()->id() . '.unread_notifications',
+            60,
+            fn () => auth()->user()->unreadNotifications()->count()
+        );
     }
 
     public function markAsRead(string $id): void
@@ -50,24 +54,30 @@ class Index extends Component
             $notification->markAsRead();
         }
 
-        unset($this->notifications, $this->unreadCount);
+        $this->bustNotificationCache();
     }
 
     public function markAllAsRead(): void
     {
         auth()->user()->unreadNotifications()->update(['read_at' => now()]);
-        unset($this->notifications, $this->unreadCount);
+        $this->bustNotificationCache();
     }
 
     public function deleteNotification(string $id): void
     {
         auth()->user()->notifications()->where('id', $id)->delete();
-        unset($this->notifications, $this->unreadCount);
+        $this->bustNotificationCache();
     }
 
     public function clearAll(): void
     {
         auth()->user()->notifications()->whereNotNull('read_at')->delete();
+        $this->bustNotificationCache();
+    }
+
+    private function bustNotificationCache(): void
+    {
+        Cache::forget('user.' . auth()->id() . '.unread_notifications');
         unset($this->notifications, $this->unreadCount);
     }
 

@@ -6,6 +6,8 @@ namespace App\Livewire\Portal;
 
 use App\Enums\ProcessingStage;
 use App\Models\WebhookRequest;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Livewire\Component;
 
@@ -23,27 +25,34 @@ class Dashboard extends Component
     {
         $tenantId = auth()->user()->tenant_id;
 
-        $this->stats = [
-            'received_today'  => WebhookRequest::whereDate('created_at', today())
+        Cache::forget("portal.dashboard.stats.{$tenantId}");
+
+        $this->stats = Cache::remember("portal.dashboard.stats.{$tenantId}", 60, function () use ($tenantId) {
+            // Single query for all today's stage counts
+            $row = DB::table('webhook_requests')
                 ->where('tenant_id', $tenantId)
-                ->count(),
-            'completed_today' => WebhookRequest::whereDate('created_at', today())
-                ->where('tenant_id', $tenantId)
-                ->where('processing_stage', ProcessingStage::Completed->value)
-                ->count(),
-            'failed_today'    => WebhookRequest::whereDate('created_at', today())
-                ->where('tenant_id', $tenantId)
-                ->where('processing_stage', ProcessingStage::Failed->value)
-                ->count(),
-            'pending_today'   => WebhookRequest::whereDate('created_at', today())
-                ->where('tenant_id', $tenantId)
-                ->whereNotIn('processing_stage', [
+                ->whereDate('created_at', today())
+                ->selectRaw("
+                    COUNT(*) as received_today,
+                    SUM(CASE WHEN processing_stage = ? THEN 1 ELSE 0 END) as completed_today,
+                    SUM(CASE WHEN processing_stage = ? THEN 1 ELSE 0 END) as failed_today,
+                    SUM(CASE WHEN processing_stage NOT IN (?,?,?) THEN 1 ELSE 0 END) as pending_today
+                ", [
+                    ProcessingStage::Completed->value,
+                    ProcessingStage::Failed->value,
                     ProcessingStage::Completed->value,
                     ProcessingStage::Failed->value,
                     ProcessingStage::Skipped->value,
                 ])
-                ->count(),
-        ];
+                ->first();
+
+            return [
+                'received_today'  => (int) ($row->received_today  ?? 0),
+                'completed_today' => (int) ($row->completed_today ?? 0),
+                'failed_today'    => (int) ($row->failed_today    ?? 0),
+                'pending_today'   => (int) ($row->pending_today   ?? 0),
+            ];
+        });
 
         $this->recentRequests = WebhookRequest::where('tenant_id', $tenantId)
             ->select([

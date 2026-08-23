@@ -25,7 +25,7 @@
         </flux:select>
         <flux:select wire:model.live="tenantFilter" size="sm" class="w-44" placeholder="All Tenants">
             <flux:select.option value="">All Tenants</flux:select.option>
-            @foreach ($tenants as $tenant)
+            @foreach ($this->tenants as $tenant)
                 <flux:select.option value="{{ $tenant->id }}">{{ $tenant->name }}</flux:select.option>
             @endforeach
         </flux:select>
@@ -46,7 +46,7 @@
                     <flux:table.column>Actions</flux:table.column>
                 </flux:table.columns>
                 <flux:table.rows>
-                    @forelse ($webhookRequests as $request)
+                    @forelse ($this->webhookRequests as $request)
                         @php
                             $stage = $request->processing_stage->value;
                             $stageColor = match($stage) {
@@ -79,9 +79,9 @@
                 </flux:table.rows>
             </flux:table>
         </div>
-        @if ($webhookRequests->hasPages())
+        @if ($this->webhookRequests->hasPages())
             <div class="px-4 py-3 border-t border-zinc-200 dark:border-zinc-700">
-                {{ $webhookRequests->links() }}
+                {{ $this->webhookRequests->links() }}
             </div>
         @endif
     </div>

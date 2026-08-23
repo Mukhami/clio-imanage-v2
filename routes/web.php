@@ -45,6 +45,9 @@ Route::middleware(['auth', 'verified', 'role:Super Admin|Admin|Support'])
         Route::get('/users/{id}/edit', Admin\Users\Edit::class)->name('users.edit');
         Route::get('/roles', Admin\Roles\Index::class)->name('roles.index');
 
+        Route::get('/enquiries', Admin\Enquiries\Index::class)->name('enquiries.index');
+        Route::get('/enquiries/{id}', Admin\Enquiries\Show::class)->name('enquiries.show');
+
         // OAuth — admin initiates the flow
         Route::get('/tenants/{id}/clio/authorize', [ClioOAuthController::class, 'redirect'])->name('tenants.clio.authorize');
         Route::get('/tenants/{id}/imanage/authorize', [ImanageOAuthController::class, 'redirect'])->name('tenants.imanage.authorize');

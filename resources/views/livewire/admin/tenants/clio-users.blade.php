@@ -14,7 +14,7 @@
         <div>
             <flux:heading size="xl">Clio Users — {{ $tenant->name }}</flux:heading>
             <flux:text class="text-zinc-500 mt-1">
-                {{ $this->totalCount }} total · {{ $this->enabledCount }} enabled
+                {{ $this->counts['total'] }} total · {{ $this->counts['enabled'] }} enabled
             </flux:text>
         </div>
         <flux:button

@@ -50,15 +50,17 @@ class ClioUsers extends Component
     }
 
     #[Computed]
-    public function totalCount(): int
+    public function counts(): array
     {
-        return $this->tenant->clioUsers()->count();
-    }
+        // Single query for both totals instead of two separate count() calls
+        $row = $this->tenant->clioUsers()
+            ->selectRaw("COUNT(*) as total, SUM(CASE WHEN enabled = 1 THEN 1 ELSE 0 END) as enabled_count")
+            ->first();
 
-    #[Computed]
-    public function enabledCount(): int
-    {
-        return $this->tenant->clioUsers()->where('enabled', true)->count();
+        return [
+            'total'   => (int) ($row->total         ?? 0),
+            'enabled' => (int) ($row->enabled_count ?? 0),
+        ];
     }
 
     // -------------------------------------------------------------------------

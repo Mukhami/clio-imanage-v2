@@ -53,6 +53,15 @@
                             {{ __('Users') }}
                         </flux:sidebar.item>
 
+                        <flux:sidebar.item
+                            icon="envelope"
+                            :href="route('admin.enquiries.index')"
+                            :current="request()->routeIs('admin.enquiries.*')"
+                            wire:navigate
+                        >
+                            {{ __('Enquiries') }}
+                        </flux:sidebar.item>
+
                         @if(auth()->user()->hasRole('Super Admin'))
                         <flux:sidebar.item
                             icon="shield-check"
@@ -121,7 +130,7 @@
                     wire:navigate
                 >
                     {{ __('Notifications') }}
-                    @php $unreadCount = auth()->user()->unreadNotifications()->count(); @endphp
+                    @php $unreadCount = cache()->remember('user.' . auth()->id() . '.unread_notifications', 30, fn () => auth()->user()->unreadNotifications()->count()); @endphp
                     @if($unreadCount > 0)
                         <flux:badge color="red" size="sm">{{ $unreadCount }}</flux:badge>
                     @endif

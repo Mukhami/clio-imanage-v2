@@ -10,7 +10,7 @@
         <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
             <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
                 <p class="text-xs font-medium text-neutral-400">Active</p>
-                <div class="mt-1 text-3xl font-bold text-white">{{ $stats['active_tenants'] ?? 0 }}</div>
+                <div class="mt-1 text-3xl font-bold text-zinc-900 dark:text-white">{{ $stats['active_tenants'] ?? 0 }}</div>
             </div>
             <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
                 <p class="text-xs font-medium text-neutral-400">With Active Subscription</p>
@@ -29,7 +29,7 @@
         <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
                 <p class="text-xs font-medium text-neutral-400">Received</p>
-                <div class="mt-1 text-3xl font-bold text-white">{{ $stats['webhook_requests_today'] ?? 0 }}</div>
+                <div class="mt-1 text-3xl font-bold text-zinc-900 dark:text-white">{{ $stats['webhook_requests_today'] ?? 0 }}</div>
             </div>
             <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
                 <p class="text-xs font-medium text-neutral-400">Completed</p>
@@ -67,7 +67,7 @@
                         <li class="flex items-center justify-between px-6 py-3">
                             <div class="flex items-center gap-2">
                                 <span class="h-2 w-2 rounded-full bg-ml-error"></span>
-                                <span class="text-sm font-medium text-white">{{ $tenant->name }}</span>
+                                <span class="text-sm font-medium text-zinc-900 dark:text-white">{{ $tenant->name }}</span>
                             </div>
                             <flux:button
                                 size="xs"
@@ -100,7 +100,7 @@
                     @foreach ($this->expiringSubscriptions as $sub)
                         <li class="flex items-center justify-between px-6 py-3">
                             <div>
-                                <p class="text-sm font-medium text-white">{{ $sub->tenant->name }}</p>
+                                <p class="text-sm font-medium text-zinc-900 dark:text-white">{{ $sub->tenant->name }}</p>
                                 <p class="font-mono text-xs text-neutral-500">{{ $sub->reference }}</p>
                             </div>
                             <div class="flex items-center gap-3">
@@ -146,7 +146,7 @@
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                     @foreach ($this->recentFailures as $failure)
                         <tr>
-                            <td class="px-6 py-3 text-sm text-white">{{ $failure->tenant?->name ?? '—' }}</td>
+                            <td class="px-6 py-3 text-sm text-zinc-900 dark:text-white">{{ $failure->tenant?->name ?? '—' }}</td>
                             <td class="px-6 py-3 font-mono text-sm text-neutral-400">{{ Str::limit($failure->correlation_id, 20) }}</td>
                             <td class="max-w-xs truncate px-6 py-3 text-sm text-ml-error">{{ $failure->error_message ?? '—' }}</td>
                             <td class="px-6 py-3 text-sm text-neutral-400">{{ $failure->created_at->diffForHumans() }}</td>

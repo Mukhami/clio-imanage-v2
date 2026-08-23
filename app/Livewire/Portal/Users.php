@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Livewire\Portal;
 
 use App\Models\User;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\View\View;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -30,6 +32,15 @@ class Users extends Component
     public function mount(): void
     {
         abort_unless(auth()->user()->hasRole('Tenant Admin'), 403);
+    }
+
+    #[Computed]
+    public function users(): LengthAwarePaginator
+    {
+        return User::where('tenant_id', auth()->user()->tenant_id)
+            ->with('roles')
+            ->orderBy('name')
+            ->paginate(20);
     }
 
     public function openCreateModal(): void
@@ -58,16 +69,13 @@ class Users extends Component
         $this->showCreateModal = false;
         $this->reset(['name', 'email', 'role']);
 
+        unset($this->users);
+
         $this->dispatch('toast', message: 'User invited. A password-setup link has been emailed to them.', variant: 'success');
     }
 
     public function render(): View
     {
-        $users = User::where('tenant_id', auth()->user()->tenant_id)
-            ->with('roles')
-            ->orderBy('name')
-            ->paginate(20);
-
-        return view('livewire.portal.users', compact('users'));
+        return view('livewire.portal.users');
     }
 }

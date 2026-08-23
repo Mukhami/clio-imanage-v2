@@ -7,7 +7,10 @@ namespace App\Livewire\Admin\WebhookRequests;
 use App\Models\Tenant;
 use App\Models\WebhookRequest;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
+
 use Illuminate\View\View;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -27,10 +30,21 @@ class Index extends Component
     public function updatingDateFrom(): void { $this->resetPage(); }
     public function updatingDateTo(): void { $this->resetPage(); }
 
+    #[Computed]
+    public function tenants(): Collection
+    {
+        return Tenant::orderBy('name')->get(['id', 'name']);
+    }
+
+    #[Computed]
     public function webhookRequests(): LengthAwarePaginator
     {
         return WebhookRequest::query()
-            ->with('tenant')
+            ->with('tenant:id,name')
+            ->select([
+                'id', 'tenant_id', 'correlation_id', 'processing_stage',
+                'retrieved_client_id', 'retrieved_matter_id', 'created_at',
+            ])
             ->when($this->stageFilter, fn ($q) => $q->where('processing_stage', $this->stageFilter))
             ->when($this->tenantFilter, fn ($q) => $q->where('tenant_id', $this->tenantFilter))
             ->when($this->dateFrom, fn ($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
@@ -48,9 +62,6 @@ class Index extends Component
 
     public function render(): View
     {
-        return view('livewire.admin.webhook-requests.index', [
-            'webhookRequests' => $this->webhookRequests(),
-            'tenants'         => Tenant::orderBy('name')->get(['id', 'name']),
-        ]);
+        return view('livewire.admin.webhook-requests.index');
     }
 }
