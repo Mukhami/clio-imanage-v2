@@ -9,15 +9,19 @@ use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use App\Services\ClioApiService;
 use Carbon\Carbon;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Subscriptions extends Component
 {
+    use WithPagination;
+
     public Tenant $tenant;
 
     // -------------------------------------------------------------------------
@@ -41,12 +45,12 @@ class Subscriptions extends Component
     // -------------------------------------------------------------------------
 
     #[Computed]
-    public function subscriptions()
+    public function subscriptions(): LengthAwarePaginator
     {
         return $this->tenant->tenantSubscriptions()
             ->with('voidedBy')
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(15);
     }
 
     // -------------------------------------------------------------------------
@@ -93,6 +97,7 @@ class Subscriptions extends Component
         session()->flash('success', 'Subscription created.');
 
         unset($this->subscriptions);
+        $this->resetPage();
     }
 
     public function voidSubscription(int $subscriptionId): void
@@ -108,6 +113,7 @@ class Subscriptions extends Component
         session()->flash('success', "Subscription {$subscription->reference} voided.");
 
         unset($this->subscriptions);
+        $this->resetPage();
     }
 
     // -------------------------------------------------------------------------

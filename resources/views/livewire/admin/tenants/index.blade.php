@@ -12,11 +12,11 @@
     <div class="mb-4 flex items-center gap-3">
         <flux:input wire:model.live="search" placeholder="Search by name or slug..." size="sm" class="w-64" />
         <flux:select wire:model.live="statusFilter" size="sm" class="w-44" placeholder="All Statuses">
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="pending">Pending</option>
-            <option value="suspended">Suspended</option>
-            <option value="archived">Archived</option>
+            <flux:select.option value="">All Statuses</flux:select.option>
+            <flux:select.option value="active">Active</flux:select.option>
+            <flux:select.option value="pending">Pending</flux:select.option>
+            <flux:select.option value="suspended">Suspended</flux:select.option>
+            <flux:select.option value="archived">Archived</flux:select.option>
         </flux:select>
     </div>
 

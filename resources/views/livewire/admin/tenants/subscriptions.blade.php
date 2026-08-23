@@ -78,6 +78,11 @@
                     @endforeach
                 </tbody>
             </table>
+            @if ($this->subscriptions->hasPages())
+                <div class="px-6 py-4 border-t border-zinc-100 dark:border-zinc-800">
+                    {{ $this->subscriptions->links() }}
+                </div>
+            @endif
         @endif
     </div>
 

@@ -24,12 +24,12 @@
             class="w-72"
         />
         <flux:select wire:model.live="roleFilter" size="sm" class="w-44" placeholder="All Roles">
-            <option value="">All Roles</option>
-            <option value="Super Admin">Super Admin</option>
-            <option value="Admin">Admin</option>
-            <option value="Support">Support</option>
-            <option value="Tenant Admin">Tenant Admin</option>
-            <option value="Tenant Viewer">Tenant Viewer</option>
+            <flux:select.option value="">All Roles</flux:select.option>
+            <flux:select.option value="Super Admin">Super Admin</flux:select.option>
+            <flux:select.option value="Admin">Admin</flux:select.option>
+            <flux:select.option value="Support">Support</flux:select.option>
+            <flux:select.option value="Tenant Admin">Tenant Admin</flux:select.option>
+            <flux:select.option value="Tenant Viewer">Tenant Viewer</flux:select.option>
         </flux:select>
     </div>
 

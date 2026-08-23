@@ -62,35 +62,163 @@
                                     variant="ghost"
                                     wire:click="selectLibrary({{ $library->id }})"
                                 >
-                                    {{ $selectedLibraryId === $library->id ? 'Hide' : 'Templates' }}
+                                    {{ $selectedLibraryId === $library->id ? 'Hide' : 'View Data' }}
                                 </flux:button>
                             </td>
                         </tr>
+
                         @if ($selectedLibraryId === $library->id)
                             <tr>
-                                <td colspan="7" class="bg-zinc-50 dark:bg-zinc-800/50 px-6 py-0">
-                                    <div class="py-4">
-                                        @if ($this->templates->isEmpty())
-                                            <flux:text class="text-zinc-400 text-sm">No templates in this library.</flux:text>
+                                <td colspan="7" class="bg-zinc-50 dark:bg-zinc-800/40 px-6 py-5">
+
+                                    {{-- Tabs --}}
+                                    <div class="flex items-center gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-700">
+                                        @foreach ([
+                                            'templates'      => 'Templates',
+                                            'practice_areas' => 'Practice Areas',
+                                            'users'          => 'Users',
+                                            'groups'         => 'Groups',
+                                        ] as $tab => $label)
+                                            <button
+                                                wire:click="setTab('{{ $tab }}')"
+                                                class="px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors
+                                                    {{ $activeTab === $tab
+                                                        ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+                                                        : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' }}"
+                                            >
+                                                {{ $label }}
+                                            </button>
+                                        @endforeach
+                                    </div>
+
+                                    {{-- Search --}}
+                                    <div class="mb-4">
+                                        <flux:input
+                                            wire:model.live.debounce.300ms="search"
+                                            placeholder="Search…"
+                                            class="max-w-sm"
+                                            clearable
+                                        />
+                                    </div>
+
+                                    {{-- Templates --}}
+                                    @if ($activeTab === 'templates')
+                                        @if (! $this->templates || $this->templates->isEmpty())
+                                            <flux:text class="text-zinc-400 text-sm">No templates found.</flux:text>
                                         @else
                                             <table class="min-w-full">
                                                 <thead>
                                                     <tr>
-                                                        <th class="py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider pr-8">Template Name</th>
-                                                        <th class="py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">iManage Template ID</th>
+                                                        <th class="py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider pr-8">Name</th>
+                                                        <th class="py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">iManage ID</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                                                     @foreach ($this->templates as $template)
                                                         <tr>
-                                                            <td class="py-2 text-sm text-zinc-700 dark:text-zinc-300 pr-8">{{ $template->description }}</td>
+                                                            <td class="py-2 text-sm text-zinc-700 dark:text-zinc-300 pr-8">{{ $template->description ?? '—' }}</td>
                                                             <td class="py-2 text-sm font-mono text-zinc-400">{{ $template->imanage_template_id }}</td>
                                                         </tr>
                                                     @endforeach
                                                 </tbody>
                                             </table>
+                                            @if ($this->templates->hasPages())
+                                                <div class="pt-3 border-t border-zinc-100 dark:border-zinc-700 mt-2">
+                                                    {{ $this->templates->links() }}
+                                                </div>
+                                            @endif
                                         @endif
-                                    </div>
+                                    @endif
+
+                                    {{-- Practice Areas --}}
+                                    @if ($activeTab === 'practice_areas')
+                                        @if (! $this->practiceAreas || $this->practiceAreas->isEmpty())
+                                            <flux:text class="text-zinc-400 text-sm">No practice areas found.</flux:text>
+                                        @else
+                                            <table class="min-w-full">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider pr-8">Key</th>
+                                                        <th class="py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Description</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
+                                                    @foreach ($this->practiceAreas as $area)
+                                                        <tr>
+                                                            <td class="py-2 text-sm font-mono text-zinc-500 pr-8">{{ $area->key }}</td>
+                                                            <td class="py-2 text-sm text-zinc-700 dark:text-zinc-300">{{ $area->description ?? '—' }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                            @if ($this->practiceAreas->hasPages())
+                                                <div class="pt-3 border-t border-zinc-100 dark:border-zinc-700 mt-2">
+                                                    {{ $this->practiceAreas->links() }}
+                                                </div>
+                                            @endif
+                                        @endif
+                                    @endif
+
+                                    {{-- Users --}}
+                                    @if ($activeTab === 'users')
+                                        @if (! $this->users || $this->users->isEmpty())
+                                            <flux:text class="text-zinc-400 text-sm">No users found.</flux:text>
+                                        @else
+                                            <table class="min-w-full">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider pr-8">Name</th>
+                                                        <th class="py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider pr-8">Email</th>
+                                                        <th class="py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">iManage ID</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
+                                                    @foreach ($this->users as $user)
+                                                        <tr>
+                                                            <td class="py-2 text-sm text-zinc-700 dark:text-zinc-300 pr-8">{{ $user->full_name ?? '—' }}</td>
+                                                            <td class="py-2 text-sm text-zinc-500 pr-8">{{ $user->email ?? '—' }}</td>
+                                                            <td class="py-2 text-sm font-mono text-zinc-400">{{ $user->imanage_user_id }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                            @if ($this->users->hasPages())
+                                                <div class="pt-3 border-t border-zinc-100 dark:border-zinc-700 mt-2">
+                                                    {{ $this->users->links() }}
+                                                </div>
+                                            @endif
+                                        @endif
+                                    @endif
+
+                                    {{-- Groups --}}
+                                    @if ($activeTab === 'groups')
+                                        @if (! $this->groups || $this->groups->isEmpty())
+                                            <flux:text class="text-zinc-400 text-sm">No groups found.</flux:text>
+                                        @else
+                                            <table class="min-w-full">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider pr-8">Name</th>
+                                                        <th class="py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">iManage Group ID</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
+                                                    @foreach ($this->groups as $group)
+                                                        <tr>
+                                                            <td class="py-2 text-sm text-zinc-700 dark:text-zinc-300 pr-8">{{ $group->name ?? '—' }}</td>
+                                                            <td class="py-2 text-sm font-mono text-zinc-400">{{ $group->imanage_group_id }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                            @if ($this->groups->hasPages())
+                                                <div class="pt-3 border-t border-zinc-100 dark:border-zinc-700 mt-2">
+                                                    {{ $this->groups->links() }}
+                                                </div>
+                                            @endif
+                                        @endif
+                                    @endif
+
                                 </td>
                             </tr>
                         @endif

@@ -17,10 +17,12 @@ class WebhookActivity extends Component
     public string $stageFilter = '';
     public string $dateFrom = '';
     public string $dateTo = '';
+    public string $search = '';
 
     public function updatingStageFilter(): void { $this->resetPage(); }
     public function updatingDateFrom(): void { $this->resetPage(); }
     public function updatingDateTo(): void { $this->resetPage(); }
+    public function updatingSearch(): void { $this->resetPage(); }
 
     public function webhookRequests(): LengthAwarePaginator
     {
@@ -36,6 +38,11 @@ class WebhookActivity extends Component
             ->when($this->stageFilter, fn ($q) => $q->where('processing_stage', $this->stageFilter))
             ->when($this->dateFrom, fn ($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
             ->when($this->dateTo, fn ($q) => $q->whereDate('created_at', '<=', $this->dateTo))
+            ->when($this->search, fn ($q) => $q->where(function ($inner) {
+                $inner->where('correlation_id', 'like', '%' . $this->search . '%')
+                      ->orWhere('retrieved_client_id', 'like', '%' . $this->search . '%')
+                      ->orWhere('retrieved_matter_id', 'like', '%' . $this->search . '%');
+            }))
             ->orderBy('created_at', 'desc')
             ->paginate(25);
     }

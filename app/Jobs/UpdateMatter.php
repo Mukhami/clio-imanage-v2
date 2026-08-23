@@ -12,7 +12,10 @@ use App\Models\ImanageTemplate;
 use App\Models\ImanageWorkspace;
 use App\Models\Tenant;
 use App\Models\TenantJobLock;
+use App\Models\User;
 use App\Models\WebhookRequest;
+use App\Notifications\TenantLockTimedOut;
+use Illuminate\Support\Facades\Notification;
 use App\Services\ClioApiService;
 use App\Services\ImanageApiService;
 use App\Services\TenantConfigurationService;
@@ -59,9 +62,17 @@ class UpdateMatter implements ShouldQueue
             $lock = TenantJobLock::where('tenant_id', $tenant->id)->lockForUpdate()->first();
 
             if ($lock) {
-                $locked = true;
+                if ($lock->created_at->lt(now()->subHour())) {
+                    // Stale lock (>1 hour old) — clear it and notify admins
+                    $lock->delete();
 
-                return;
+                    $admins = User::role(['Super Admin', 'Admin'])->get();
+                    Notification::send($admins, new TenantLockTimedOut($tenant, $lock->created_at->toDateTimeString()));
+                } else {
+                    $locked = true;
+
+                    return;
+                }
             }
 
             TenantJobLock::firstOrCreate(['tenant_id' => $tenant->id]);

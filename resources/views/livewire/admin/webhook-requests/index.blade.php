@@ -11,22 +11,22 @@
     <div class="mb-4 flex items-center gap-2 flex-nowrap overflow-x-auto pb-1">
         <flux:input wire:model.live="search" placeholder="Correlation ID, Client, Matter..." size="sm" class="min-w-52 w-52" />
         <flux:select wire:model.live="stageFilter" size="sm" class="w-44" placeholder="All Stages">
-            <option value="">All Stages</option>
-            <option value="received">Received</option>
-            <option value="validated">Validated</option>
-            <option value="parsed">Parsed</option>
-            <option value="filtered">Filtered</option>
-            <option value="enqueued">Enqueued</option>
-            <option value="processing">Processing</option>
-            <option value="post_processing">Post Processing</option>
-            <option value="completed">Completed</option>
-            <option value="failed">Failed</option>
-            <option value="skipped">Skipped</option>
+            <flux:select.option value="">All Stages</flux:select.option>
+            <flux:select.option value="received">Received</flux:select.option>
+            <flux:select.option value="validated">Validated</flux:select.option>
+            <flux:select.option value="parsed">Parsed</flux:select.option>
+            <flux:select.option value="filtered">Filtered</flux:select.option>
+            <flux:select.option value="enqueued">Enqueued</flux:select.option>
+            <flux:select.option value="processing">Processing</flux:select.option>
+            <flux:select.option value="post_processing">Post Processing</flux:select.option>
+            <flux:select.option value="completed">Completed</flux:select.option>
+            <flux:select.option value="failed">Failed</flux:select.option>
+            <flux:select.option value="skipped">Skipped</flux:select.option>
         </flux:select>
         <flux:select wire:model.live="tenantFilter" size="sm" class="w-44" placeholder="All Tenants">
-            <option value="">All Tenants</option>
+            <flux:select.option value="">All Tenants</flux:select.option>
             @foreach ($tenants as $tenant)
-                <option value="{{ $tenant->id }}">{{ $tenant->name }}</option>
+                <flux:select.option value="{{ $tenant->id }}">{{ $tenant->name }}</flux:select.option>
             @endforeach
         </flux:select>
         <flux:input type="date" wire:model.live="dateFrom" size="sm" class="w-36" />
