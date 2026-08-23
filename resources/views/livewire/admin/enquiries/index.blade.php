@@ -26,6 +26,7 @@
     </div>
 
     <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+        <div class="px-4">
         <flux:table>
             <flux:table.columns>
                 <flux:table.column>Firm</flux:table.column>
@@ -86,6 +87,7 @@
                 @endforelse
             </flux:table.rows>
         </flux:table>
+        </div>
 
         @if ($this->enquiries->hasPages())
             <div class="border-t border-zinc-200 dark:border-zinc-700 px-4 py-3">
