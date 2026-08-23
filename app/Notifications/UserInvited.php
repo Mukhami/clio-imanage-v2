@@ -38,8 +38,8 @@ class UserInvited extends Notification implements ShouldQueue
         }
 
         return $mail
-            ->action('Set Your Password', $this->resetUrl)
-            ->line('This password reset link will expire in 60 minutes.')
+            ->action('Activate Your Account', $this->resetUrl)
+            ->line('This activation link will expire in 60 minutes.')
             ->line('If you did not expect to receive this invitation, no further action is required.');
     }
 

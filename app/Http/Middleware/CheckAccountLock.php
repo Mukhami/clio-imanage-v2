@@ -13,6 +13,15 @@ class CheckAccountLock
     {
         $user = Auth::user();
 
+        if ($user && $user->suspended_at) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Your account has been suspended. Please contact your administrator.']);
+        }
+
         if ($user && $user->locked_until && $user->locked_until->isFuture()) {
             Auth::logout();
             $request->session()->invalidate();

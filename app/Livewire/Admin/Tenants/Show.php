@@ -7,19 +7,40 @@ namespace App\Livewire\Admin\Tenants;
 use App\Jobs\SyncClioData;
 use App\Jobs\SyncImanageLibraries;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Models\Webhook;
 use App\Models\WebhookType;
+use App\Notifications\UserInvited;
 use App\Services\ClioApiService;
+use Flux\Flux;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 class Show extends Component
 {
     public Tenant $tenant;
+
+    // -------------------------------------------------------------------------
+    // Invite modal state
+    // -------------------------------------------------------------------------
+
+    public bool $showInviteModal = false;
+
+    #[Validate('required|string|max:255')]
+    public string $inviteName = '';
+
+    #[Validate('required|email')]
+    public string $inviteEmail = '';
+
+    #[Validate('required|in:Tenant Admin,Tenant Viewer')]
+    public string $inviteRole = 'Tenant Admin';
 
     public function mount(int $id): void
     {
@@ -71,13 +92,13 @@ class Show extends Component
     public function syncClioData(): void
     {
         SyncClioData::dispatch($this->tenant->id);
-        session()->flash('success', 'Clio data sync queued.');
+        Flux::toast(text: 'Clio data sync queued.', variant: 'success');
     }
 
     public function syncImanageData(): void
     {
         SyncImanageLibraries::dispatch($this->tenant->id, chainDataSync: true);
-        session()->flash('success', 'iManage library + data sync queued.');
+        Flux::toast(text: 'iManage library + data sync queued.', variant: 'success');
     }
 
     // -------------------------------------------------------------------------
@@ -94,7 +115,7 @@ class Show extends Component
             ->exists();
 
         if ($existing) {
-            session()->flash('error', "An active {$webhookType->name} webhook is already registered.");
+            Flux::toast(text: "An active {$webhookType->name} webhook is already registered.", variant: 'danger');
             return;
         }
 
@@ -125,10 +146,10 @@ class Show extends Component
                 'etag'            => $data['etag'] ?? null,
             ]);
 
-            session()->flash('success', "{$webhookType->name} webhook registered.");
+            Flux::toast(text: "{$webhookType->name} webhook registered.", variant: 'success');
         } catch (\Throwable $e) {
             Log::error("Failed to register webhook for tenant {$this->tenant->id}: {$e->getMessage()}");
-            session()->flash('error', 'Failed to register webhook: ' . $e->getMessage());
+            Flux::toast(text: 'Failed to register webhook: ' . $e->getMessage(), variant: 'danger');
         }
 
         unset($this->tenantWebhooks);
@@ -146,13 +167,66 @@ class Show extends Component
         }
 
         $webhook->delete();
-        session()->flash('success', 'Webhook deleted.');
+        Flux::toast(text: 'Webhook deleted.', variant: 'success');
 
         unset($this->tenantWebhooks);
     }
 
+    // -------------------------------------------------------------------------
+    // Portal Users
+    // -------------------------------------------------------------------------
+
+    #[Computed]
+    public function tenantUsers(): Collection
+    {
+        return User::where('tenant_id', $this->tenant->id)
+            ->with('roles')
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function openInviteModal(): void
+    {
+        $this->reset(['inviteName', 'inviteEmail']);
+        $this->inviteRole = 'Tenant Admin';
+        $this->showInviteModal = true;
+    }
+
+    public function inviteUser(): void
+    {
+        $this->validateOnly('inviteName');
+        $this->validateOnly('inviteRole');
+        $this->validate([
+            'inviteEmail' => 'required|email|unique:users,email',
+        ]);
+
+        $user = User::create([
+            'name'              => $this->inviteName,
+            'email'             => $this->inviteEmail,
+            'password'          => Hash::make(Str::random(32)),
+            'email_verified_at' => now(),
+            'tenant_id'         => $this->tenant->id,
+        ]);
+
+        $user->assignRole($this->inviteRole);
+
+        $token    = Password::createToken($user);
+        $resetUrl = url(route('password.reset', ['token' => $token, 'email' => $user->email], false));
+
+        $user->notify(new UserInvited($this->tenant, $resetUrl));
+
+        $this->showInviteModal = false;
+        $this->reset(['inviteName', 'inviteEmail', 'inviteRole']);
+
+        unset($this->tenantUsers);
+
+        Flux::toast(text: "{$user->name} has been invited to the portal.", variant: 'success');
+    }
+
     public function render(): View
     {
-        return view('livewire.admin.tenants.show');
+        return view('livewire.admin.tenants.show', [
+            'tenantUsers' => $this->tenantUsers,
+        ]);
     }
 }

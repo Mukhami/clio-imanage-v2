@@ -33,10 +33,11 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $last_login_ip
  * @property int $failed_login_attempts
  * @property Carbon|null $locked_until
+ * @property Carbon|null $suspended_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password', 'email_verified_at', 'tenant_id', 'last_login_at', 'last_login_ip', 'failed_login_attempts', 'locked_until'])]
+#[Fillable(['name', 'email', 'password', 'email_verified_at', 'tenant_id', 'last_login_at', 'last_login_ip', 'failed_login_attempts', 'locked_until', 'suspended_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -55,8 +56,32 @@ class User extends Authenticatable implements PasskeyUser
             'password'               => 'hashed',
             'last_login_at'          => 'datetime',
             'locked_until'           => 'datetime',
+            'suspended_at'           => 'datetime',
             'failed_login_attempts'  => 'integer',
         ];
+    }
+
+    // -------------------------------------------------------------------------
+    // Status helpers
+    // -------------------------------------------------------------------------
+
+    public function isSuspended(): bool
+    {
+        return $this->suspended_at !== null;
+    }
+
+    /** Returns 'invited' | 'active' | 'suspended' */
+    public function status(): string
+    {
+        if ($this->isSuspended()) {
+            return 'suspended';
+        }
+
+        if ($this->last_login_at === null) {
+            return 'invited';
+        }
+
+        return 'active';
     }
 
     /**

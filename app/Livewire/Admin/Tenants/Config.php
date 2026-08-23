@@ -19,6 +19,7 @@ use App\Models\PracticeAreaMapping;
 use App\Models\TemplateMapping;
 use App\Models\Tenant;
 use App\Models\UserMapping;
+use Flux\Flux;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -133,7 +134,7 @@ class Config extends Component
             ]
         );
 
-        session()->flash('success', 'Settings saved.');
+        Flux::toast(text: 'Settings saved.', variant: 'success');
     }
 
     // -------------------------------------------------------------------------

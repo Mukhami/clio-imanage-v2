@@ -17,10 +17,6 @@
             <flux:text class="text-xs text-zinc-500 mt-1">Determines how client ID and matter ID are extracted from a Clio matter's display number field.</flux:text>
         </div>
         <div class="p-6 space-y-4">
-            @if (session('parsing_saved'))
-                <flux:callout variant="success" icon="check-circle">{{ session('parsing_saved') }}</flux:callout>
-            @endif
-
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <flux:field class="sm:col-span-2">
                     <flux:label>Parsing Strategy</flux:label>
@@ -131,10 +127,6 @@
             <flux:text class="text-xs text-zinc-500 mt-1">Template for constructing iManage workspace names from matter data.</flux:text>
         </div>
         <div class="p-6 space-y-4">
-            @if (session('naming_saved'))
-                <flux:callout variant="success" icon="check-circle">{{ session('naming_saved') }}</flux:callout>
-            @endif
-
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-4 py-3">
                 <flux:text class="text-xs font-medium text-zinc-500 mb-1">Available tokens</flux:text>
                 <div class="flex flex-wrap gap-2 font-mono text-xs text-zinc-700 dark:text-zinc-300">
@@ -169,10 +161,6 @@
             <flux:text class="text-xs text-zinc-500 mt-1">Optionally reformat Clio client names before using them in iManage.</flux:text>
         </div>
         <div class="p-6 space-y-4">
-            @if (session('client_name_saved'))
-                <flux:callout variant="success" icon="check-circle">{{ session('client_name_saved') }}</flux:callout>
-            @endif
-
             <flux:field>
                 <flux:label>Strategy</flux:label>
                 <flux:select wire:model.live="clientNameStrategy">
@@ -211,10 +199,6 @@
             <flux:text class="text-xs text-zinc-500 mt-1">Optionally reformat the iManage workspace description field derived from Clio matter data.</flux:text>
         </div>
         <div class="p-6 space-y-4">
-            @if (session('matter_desc_saved'))
-                <flux:callout variant="success" icon="check-circle">{{ session('matter_desc_saved') }}</flux:callout>
-            @endif
-
             <flux:field>
                 <flux:label>Strategy</flux:label>
                 <flux:select wire:model.live="matterDescStrategy">

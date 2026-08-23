@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\Tenants;
 
 use App\Jobs\SyncClioData;
 use App\Models\Tenant;
+use Flux\Flux;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -70,7 +71,7 @@ class ClioUsers extends Component
     public function syncUsers(): void
     {
         SyncClioData::dispatch($this->tenant->id);
-        session()->flash('success', 'Clio user sync queued. Refresh in a moment.');
+        Flux::toast(text: 'Clio user sync queued. Refresh in a moment.', variant: 'success');
     }
 
     public function updatedSearch(): void

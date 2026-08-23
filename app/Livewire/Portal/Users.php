@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Livewire\Portal;
 
 use App\Models\User;
+use Flux\Flux;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Notifications\UserInvited;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\View\View;
@@ -50,6 +52,42 @@ class Users extends Component
         $this->showCreateModal = true;
     }
 
+    public function suspendUser(int $userId): void
+    {
+        $user = User::where('tenant_id', auth()->user()->tenant_id)->findOrFail($userId);
+
+        abort_if($user->id === auth()->id(), 403, 'You cannot suspend your own account.');
+
+        $user->update(['suspended_at' => now()]);
+
+        unset($this->users);
+
+        Flux::toast(text: "{$user->name} has been suspended.", variant: 'warning');
+    }
+
+    public function reactivateUser(int $userId): void
+    {
+        $user = User::where('tenant_id', auth()->user()->tenant_id)->findOrFail($userId);
+
+        $user->update(['suspended_at' => null]);
+
+        unset($this->users);
+
+        Flux::toast(text: "{$user->name} has been reactivated.", variant: 'success');
+    }
+
+    public function resendInvite(int $userId): void
+    {
+        $user = User::where('tenant_id', auth()->user()->tenant_id)->findOrFail($userId);
+
+        $token    = Password::createToken($user);
+        $resetUrl = url(route('password.reset', ['token' => $token, 'email' => $user->email], false));
+
+        $user->notify(new UserInvited($user->tenant, $resetUrl));
+
+        Flux::toast(text: "Invite resent to {$user->email}.", variant: 'success');
+    }
+
     public function createUser(): void
     {
         $this->validate();
@@ -64,18 +102,23 @@ class Users extends Component
 
         $user->assignRole($this->role);
 
-        Password::sendResetLink(['email' => $this->email]);
+        $token = Password::createToken($user);
+        $resetUrl = url(route('password.reset', ['token' => $token, 'email' => $user->email], false));
+
+        $user->notify(new UserInvited($user->tenant, $resetUrl));
 
         $this->showCreateModal = false;
         $this->reset(['name', 'email', 'role']);
 
         unset($this->users);
 
-        $this->dispatch('toast', message: 'User invited. A password-setup link has been emailed to them.', variant: 'success');
+        Flux::toast(text: 'User invited. A password-setup link has been emailed to them.', variant: 'success');
     }
 
     public function render(): View
     {
-        return view('livewire.portal.users');
+        return view('livewire.portal.users', [
+            'users' => $this->users,
+        ]);
     }
 }

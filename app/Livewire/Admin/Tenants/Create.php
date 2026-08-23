@@ -13,6 +13,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Notifications\NewTenantRegistered;
 use App\Notifications\UserInvited;
+use Flux\Flux;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -25,8 +26,6 @@ class Create extends Component
     public string $name = '';
 
     public string $slug = '';
-
-    public string $reference = '';
 
     public string $status = 'pending';
 
@@ -77,7 +76,15 @@ class Create extends Component
 
     public function updatingName(string $value): void
     {
-        $this->slug = Str::slug($value);
+        $base = Str::slug($value);
+        $slug = $base;
+        $i    = 2;
+
+        while (Tenant::where('slug', $slug)->exists()) {
+            $slug = $base . '-' . $i++;
+        }
+
+        $this->slug = $slug;
     }
 
     public function testImanageCredentials(): void
@@ -149,7 +156,6 @@ class Create extends Component
         $rules = [
             'name'              => 'required|string|max:255',
             'slug'              => 'required|string|max:255|unique:tenants',
-            'reference'         => 'nullable|uuid|unique:tenants',
             'status'            => 'required|in:active,pending,suspended,archived',
             'clioLocationId'    => 'required|exists:clio_locations,id',
             'imanageCloudUrl'   => 'nullable|url',
@@ -169,8 +175,7 @@ class Create extends Component
 
         $this->validate($rules);
 
-        // reference is NOT NULL in the DB — auto-generate if not provided
-        $reference = $this->reference ?: Str::uuid()->toString();
+        $reference = Str::uuid()->toString();
 
         $tenant = Tenant::create([
             'name'                             => $this->name,
@@ -216,7 +221,7 @@ class Create extends Component
             $tenantAdmin->notify(new UserInvited($tenant, $resetUrl));
         }
 
-        session()->flash('success', 'Tenant created successfully.');
+        Flux::toast(text: 'Tenant created successfully.', variant: 'success');
 
         $this->redirect(route('admin.tenants.show', $tenant->id), navigate: true);
     }

@@ -10,15 +10,27 @@
     </div>
 
     <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+        <div class="px-4">
         <flux:table>
             <flux:table.columns>
                 <flux:table.column>Name</flux:table.column>
                 <flux:table.column>Email</flux:table.column>
                 <flux:table.column>Role</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
                 <flux:table.column>Joined</flux:table.column>
+                <flux:table.column></flux:table.column>
             </flux:table.columns>
             <flux:table.rows>
                 @forelse ($users as $user)
+                    @php
+                        $status      = $user->status();
+                        $statusColor = match($status) {
+                            'active'    => 'green',
+                            'invited'   => 'yellow',
+                            'suspended' => 'red',
+                        };
+                        $statusLabel = ucfirst($status);
+                    @endphp
                     <flux:table.row :key="$user->id">
                         <flux:table.cell>
                             <div class="flex items-center gap-3">
@@ -40,16 +52,48 @@
                             @endforeach
                         </flux:table.cell>
                         <flux:table.cell>
+                            <flux:badge size="sm" :color="$statusColor">{{ $statusLabel }}</flux:badge>
+                        </flux:table.cell>
+                        <flux:table.cell>
                             <span class="text-sm text-neutral-400">{{ $user->created_at->format('d M Y') }}</span>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            @if ($user->id !== auth()->id())
+                                <flux:dropdown>
+                                    <flux:button size="xs" variant="ghost" icon="ellipsis-horizontal" />
+                                    <flux:menu>
+                                        @if ($status === 'invited')
+                                            <flux:menu.item icon="paper-airplane" wire:click="resendInvite({{ $user->id }})">
+                                                Resend Invite
+                                            </flux:menu.item>
+                                        @endif
+                                        @if ($status === 'suspended')
+                                            <flux:menu.item icon="check-circle" wire:click="reactivateUser({{ $user->id }})">
+                                                Reactivate
+                                            </flux:menu.item>
+                                        @else
+                                            <flux:menu.item
+                                                icon="no-symbol"
+                                                variant="danger"
+                                                wire:click="suspendUser({{ $user->id }})"
+                                                wire:confirm="Suspend {{ $user->name }}? They will be immediately signed out and unable to log in."
+                                            >
+                                                Suspend
+                                            </flux:menu.item>
+                                        @endif
+                                    </flux:menu>
+                                </flux:dropdown>
+                            @endif
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="4" class="py-8 text-center text-neutral-500">No users found.</flux:table.cell>
+                        <flux:table.cell colspan="6" class="py-8 text-center text-neutral-500">No users found.</flux:table.cell>
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>
         </flux:table>
+        </div>
 
         @if ($users->hasPages())
             <div class="border-t border-zinc-200 dark:border-zinc-700 px-4 py-3">

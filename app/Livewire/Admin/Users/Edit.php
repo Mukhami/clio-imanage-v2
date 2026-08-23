@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\Users;
 
 use App\Models\User;
 use App\Notifications\UserRoleChanged;
+use Flux\Flux;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -69,7 +70,7 @@ class Edit extends Component
             }
         }
 
-        session()->flash('success', 'User updated successfully.');
+        Flux::toast(text: 'User updated successfully.', variant: 'success');
 
         $this->redirect(route('admin.users.show', $this->user->id), navigate: true);
     }

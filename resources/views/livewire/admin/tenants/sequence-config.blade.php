@@ -8,10 +8,6 @@
 
     <flux:heading size="xl" class="mb-6">{{ $tenant->name }} — Sequence Configuration</flux:heading>
 
-    @if (session('success'))
-        <flux:callout variant="success" icon="check-circle" class="mb-4">{{ session('success') }}</flux:callout>
-    @endif
-
     <form wire:submit="save">
         {{-- Client Sequence --}}
         <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 mb-6">

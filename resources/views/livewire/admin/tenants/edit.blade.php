@@ -8,10 +8,6 @@
 
     <flux:heading size="xl" class="mb-6">Edit {{ $tenant->name }}</flux:heading>
 
-    @if (session('success'))
-        <flux:callout variant="success" class="mb-4">{{ session('success') }}</flux:callout>
-    @endif
-
     <form wire:submit="save">
         {{-- Basic Information --}}
         <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 mb-6">
@@ -97,9 +93,14 @@
             <div class="p-6">
                 <flux:text class="text-xs text-zinc-500 mb-5">Stored encrypted. Clear a field to remove its value.</flux:text>
                 <div class="grid grid-cols-3 gap-x-6 gap-y-5 items-start">
-                    <flux:field>
+                    <flux:field class="col-span-3">
                         <flux:label>iManage Cloud URL</flux:label>
-                        <flux:input wire:model="imanageCloudUrl" placeholder="https://cloudimanage.com" />
+                        <flux:input wire:model.live="imanageCloudUrl" placeholder="https://cloudimanage.com" />
+                        @if ($imanageCloudUrl !== config('services.imanage.api_url'))
+                            <flux:callout variant="warning" icon="exclamation-triangle" class="mt-2 text-xs">
+                                This differs from the system default (<code>{{ config('services.imanage.api_url') }}</code>). Only change this if the tenant uses a different iManage instance.
+                            </flux:callout>
+                        @endif
                         <flux:error name="imanageCloudUrl" />
                     </flux:field>
 

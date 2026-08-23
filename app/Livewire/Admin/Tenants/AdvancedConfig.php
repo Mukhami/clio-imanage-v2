@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Admin\Tenants;
 
 use App\Models\Tenant;
+use Flux\Flux;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -140,7 +141,7 @@ class AdvancedConfig extends Component
             ]
         );
 
-        session()->flash('parsing_saved', 'Display number parsing saved.');
+        Flux::toast(text: 'Display number parsing saved.', variant: 'success');
     }
 
     public function saveWorkspaceNaming(): void
@@ -158,7 +159,7 @@ class AdvancedConfig extends Component
             ]
         );
 
-        session()->flash('naming_saved', 'Workspace naming saved.');
+        Flux::toast(text: 'Workspace naming saved.', variant: 'success');
     }
 
     public function saveClientNameConfig(): void
@@ -178,7 +179,7 @@ class AdvancedConfig extends Component
             ]
         );
 
-        session()->flash('client_name_saved', 'Client name transformation saved.');
+        Flux::toast(text: 'Client name transformation saved.', variant: 'success');
     }
 
     public function saveMatterDescConfig(): void
@@ -199,7 +200,7 @@ class AdvancedConfig extends Component
             ]
         );
 
-        session()->flash('matter_desc_saved', 'Matter description transformation saved.');
+        Flux::toast(text: 'Matter description transformation saved.', variant: 'success');
     }
 
     // -------------------------------------------------------------------------

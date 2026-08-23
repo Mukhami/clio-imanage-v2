@@ -9,6 +9,7 @@ use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use App\Services\ClioApiService;
 use Carbon\Carbon;
+use Flux\Flux;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -94,7 +95,7 @@ class Subscriptions extends Component
 
         $this->resetForm();
         $this->dispatch('close-modal', name: 'add-subscription');
-        session()->flash('success', 'Subscription created.');
+        Flux::toast(text: 'Subscription created.', variant: 'success');
 
         unset($this->subscriptions);
         $this->resetPage();
@@ -110,7 +111,7 @@ class Subscriptions extends Component
             'voided_by' => Auth::id(),
         ]);
 
-        session()->flash('success', "Subscription {$subscription->reference} voided.");
+        Flux::toast(text: "Subscription {$subscription->reference} voided.", variant: 'success');
 
         unset($this->subscriptions);
         $this->resetPage();

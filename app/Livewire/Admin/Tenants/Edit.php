@@ -10,6 +10,7 @@ use App\Integrations\Imanage\Requests\GetDiscovery;
 use App\Integrations\Imanage\Requests\GetOAuthToken;
 use App\Models\ClioLocation;
 use App\Models\Tenant;
+use Flux\Flux;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -186,7 +187,7 @@ class Edit extends Component
 
         $this->tenant->update($data);
 
-        session()->flash('success', 'Tenant updated successfully.');
+        Flux::toast(text: 'Tenant updated successfully.', variant: 'success');
 
         $this->redirect(route('admin.tenants.show', $this->tenant->id), navigate: true);
     }

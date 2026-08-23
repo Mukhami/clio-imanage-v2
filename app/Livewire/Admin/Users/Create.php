@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\Users;
 
 use App\Models\User;
 use App\Notifications\UserInvited;
+use Flux\Flux;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -49,7 +50,7 @@ class Create extends Component
 
         $user->notify(new UserInvited(null, $resetUrl));
 
-        session()->flash('success', 'User invited successfully. They will receive an email to set their password.');
+        Flux::toast(text: 'User invited successfully. They will receive an email to set their password.', variant: 'success');
 
         $this->redirect(route('admin.users.index'), navigate: true);
     }

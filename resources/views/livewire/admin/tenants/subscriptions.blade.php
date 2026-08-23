@@ -1,10 +1,5 @@
 <div x-on:close-modal.window="$flux.modal($event.detail.name).close()">
-    @if (session('success'))
-        <flux:callout variant="success" icon="check-circle" class="mb-4">{{ session('success') }}</flux:callout>
-    @endif
-    @if (session('error'))
-        <flux:callout variant="danger" icon="x-circle" class="mb-4">{{ session('error') }}</flux:callout>
-    @endif
+
 
     <flux:breadcrumbs class="mb-5">
         <flux:breadcrumbs.item href="{{ route('admin.dashboard') }}" icon="home" />

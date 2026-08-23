@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\Tenants;
 
 use App\Jobs\SyncImanageLibraries;
 use App\Models\Library;
+use Flux\Flux;
 use App\Models\Tenant;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -131,7 +132,7 @@ class ImanageData extends Component
     public function syncData(): void
     {
         SyncImanageLibraries::dispatch($this->tenant->id, chainDataSync: true);
-        session()->flash('success', 'iManage libraries + data sync queued.');
+        Flux::toast(text: 'iManage libraries + data sync queued.', variant: 'success');
     }
 
     public function selectLibrary(int $libraryId): void

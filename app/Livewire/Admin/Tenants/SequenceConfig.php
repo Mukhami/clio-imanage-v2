@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Admin\Tenants;
 
 use App\Models\Tenant;
+use Flux\Flux;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -77,7 +78,7 @@ class SequenceConfig extends Component
             ]
         );
 
-        session()->flash('success', 'Sequence configuration saved.');
+        Flux::toast(text: 'Sequence configuration saved.', variant: 'success');
     }
 
     public function deleteConfig(): void
@@ -93,7 +94,7 @@ class SequenceConfig extends Component
         $this->matterDigits          = 5;
         $this->matterCustomFieldName = '';
 
-        session()->flash('success', 'Sequence configuration deleted.');
+        Flux::toast(text: 'Sequence configuration deleted.', variant: 'success');
     }
 
     // -------------------------------------------------------------------------

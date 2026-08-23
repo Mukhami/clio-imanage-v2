@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -25,6 +27,17 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->registerMiddlewareAliases();
+        $this->registerEventListeners();
+    }
+
+    protected function registerEventListeners(): void
+    {
+        Event::listen(Login::class, function (Login $event) {
+            $event->user->forceFill([
+                'last_login_at' => now(),
+                'last_login_ip' => request()->ip(),
+            ])->saveQuietly();
+        });
     }
 
     /**

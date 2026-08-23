@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Admin\Users;
 
 use App\Models\User;
+use Flux\Flux;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -54,7 +55,7 @@ class Index extends Component
     {
         $user = User::findOrFail($id);
         $user->update(['locked_until' => now()->addYears(10)]);
-        session()->flash('success', 'User locked.');
+        Flux::toast(text: 'User locked.', variant: 'warning');
         unset($this->users);
     }
 
@@ -62,7 +63,7 @@ class Index extends Component
     {
         $user = User::findOrFail($id);
         $user->update(['locked_until' => null]);
-        session()->flash('success', 'User unlocked.');
+        Flux::toast(text: 'User unlocked.', variant: 'success');
         unset($this->users);
     }
 

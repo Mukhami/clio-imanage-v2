@@ -11,10 +11,6 @@
 
     <flux:heading size="xl" class="mb-6">{{ $tenant->name }} — Configuration</flux:heading>
 
-    @if (session('success'))
-        <flux:callout variant="success" icon="check-circle" class="mb-4">{{ session('success') }}</flux:callout>
-    @endif
-
     {{-- ------------------------------------------------------------------ --}}
     {{-- 1. Default Settings                                                 --}}
     {{-- ------------------------------------------------------------------ --}}

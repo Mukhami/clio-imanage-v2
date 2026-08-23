@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Admin\Users;
 
 use App\Models\User;
+use Flux\Flux;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -35,14 +36,14 @@ class Show extends Component
     {
         $this->user->update(['locked_until' => now()->addYears(10)]);
         $this->user->refresh();
-        session()->flash('success', 'User locked.');
+        Flux::toast(text: 'User locked.', variant: 'warning');
     }
 
     public function unlockUser(): void
     {
         $this->user->update(['locked_until' => null]);
         $this->user->refresh();
-        session()->flash('success', 'User unlocked.');
+        Flux::toast(text: 'User unlocked.', variant: 'success');
     }
 
     public function render(): View

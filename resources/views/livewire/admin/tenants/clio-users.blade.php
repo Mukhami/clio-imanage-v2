@@ -1,8 +1,4 @@
 <div>
-    @if (session('success'))
-        <flux:callout variant="success" icon="check-circle" class="mb-4">{{ session('success') }}</flux:callout>
-    @endif
-
     <flux:breadcrumbs class="mb-5">
         <flux:breadcrumbs.item href="{{ route('admin.dashboard') }}" icon="home" />
         <flux:breadcrumbs.item href="{{ route('admin.tenants.index') }}" wire:navigate>Tenants</flux:breadcrumbs.item>

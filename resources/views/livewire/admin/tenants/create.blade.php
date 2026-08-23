@@ -23,7 +23,8 @@
 
                     <flux:field>
                         <flux:label>Slug</flux:label>
-                        <flux:input wire:model="slug" placeholder="firm-name" />
+                        <flux:input wire:model="slug" placeholder="firm-name" readonly class="bg-zinc-50 dark:bg-zinc-800 cursor-not-allowed" />
+                        <flux:description>Auto-generated from the name.</flux:description>
                         <flux:error name="slug" />
                     </flux:field>
 
@@ -49,14 +50,6 @@
                         <flux:error name="clioLocationId" />
                     </flux:field>
 
-                    <div class="col-span-2">
-                        <flux:field>
-                            <flux:label>Reference <flux:badge size="sm">Optional</flux:badge></flux:label>
-                            <flux:input wire:model="reference" placeholder="Leave blank to auto-generate" />
-                            <flux:description>UUID used in the webhook URL. Auto-generated if left blank.</flux:description>
-                            <flux:error name="reference" />
-                        </flux:field>
-                    </div>
                 </div>
             </div>
         </div>
@@ -96,9 +89,14 @@
                     Cloud URL, App ID, and App Secret default from <code>IMANAGE_API_URL</code>, <code>IMANAGE_APP_KEY</code>, and <code>IMANAGE_APP_SECRET</code> respectively.
                 </flux:text>
                 <div class="grid grid-cols-3 gap-x-6 gap-y-5 items-start">
-                    <flux:field>
+                    <flux:field class="col-span-3">
                         <flux:label>iManage Cloud URL</flux:label>
-                        <flux:input wire:model="imanageCloudUrl" placeholder="https://cloudimanage.com" />
+                        <flux:input wire:model.live="imanageCloudUrl" placeholder="https://cloudimanage.com" />
+                        @if ($imanageCloudUrl !== config('services.imanage.api_url'))
+                            <flux:callout variant="warning" icon="exclamation-triangle" class="mt-2 text-xs">
+                                This differs from the system default (<code>{{ config('services.imanage.api_url') }}</code>). Only change this if the tenant uses a different iManage instance.
+                            </flux:callout>
+                        @endif
                         <flux:error name="imanageCloudUrl" />
                     </flux:field>
 
