@@ -1,2 +1,14 @@
 User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /portal/
+Disallow: /dashboard
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /email/
+Disallow: /oauth/
+Disallow: /webhook/
+Disallow: /two-factor-challenge
+
+Sitemap: https://matterlynk.com/sitemap.xml

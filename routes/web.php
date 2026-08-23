@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
 Route::get('/enquiry', \App\Livewire\Enquiry::class)->name('enquiry');
+Route::get('/sitemap.xml', fn () => response(view('seo.sitemap'), 200, ['Content-Type' => 'application/xml']))->name('sitemap');
 
 // Clio webhook receiver — no auth, rate-limited, CSRF exempt (handled by middleware exclusion)
 Route::post('/webhook/{reference}', [WebhookController::class, 'receive'])

@@ -3,11 +3,95 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        {{-- Primary --}}
         <title>MatterLynk — Connect Clio and iManage. Automatically.</title>
-        <meta name="description" content="MatterLynk synchronises your Clio matters to iManage workspaces in real time. Zero manual work. Full security mapping.">
+        <meta name="description" content="MatterLynk synchronises your Clio matters to iManage workspaces in real time. Automatic workspace creation, group security mapping, and field mapping — zero manual filing.">
+        <meta name="robots" content="index, follow">
+        <link rel="canonical" href="{{ config('app.url') }}">
+
+        {{-- Open Graph --}}
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{{ config('app.url') }}">
+        <meta property="og:site_name" content="MatterLynk">
+        <meta property="og:title" content="MatterLynk — Connect Clio and iManage. Automatically.">
+        <meta property="og:description" content="MatterLynk synchronises your Clio matters to iManage workspaces in real time. Automatic workspace creation, group security mapping, and field mapping — zero manual filing.">
+        <meta property="og:image" content="{{ config('app.url') }}/logo/png/matterlynk-horizontal-dark-1200.png">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:alt" content="MatterLynk — Clio to iManage integration">
+        <meta property="og:locale" content="en_GB">
+
+        {{-- Twitter Card --}}
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="MatterLynk — Connect Clio and iManage. Automatically.">
+        <meta name="twitter:description" content="MatterLynk synchronises your Clio matters to iManage workspaces in real time. Automatic workspace creation, group security mapping, and field mapping — zero manual filing.">
+        <meta name="twitter:image" content="{{ config('app.url') }}/logo/png/matterlynk-horizontal-dark-1200.png">
+        <meta name="twitter:image:alt" content="MatterLynk — Clio to iManage integration">
+
+        {{-- Favicons --}}
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+        {{-- Performance hints --}}
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link rel="dns-prefetch" href="https://fonts.bunny.net">
+
+        {{-- Structured data --}}
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "Organization",
+                    "@id": "{{ config('app.url') }}/#organization",
+                    "name": "MatterLynk",
+                    "url": "{{ config('app.url') }}",
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": "{{ config('app.url') }}/logo/png/matterlynk-horizontal-dark-1200.png"
+                    },
+                    "contactPoint": {
+                        "@type": "ContactPoint",
+                        "contactType": "sales",
+                        "url": "{{ config('app.url') }}/enquiry"
+                    }
+                },
+                {
+                    "@type": "SoftwareApplication",
+                    "@id": "{{ config('app.url') }}/#software",
+                    "name": "MatterLynk",
+                    "applicationCategory": "BusinessApplication",
+                    "operatingSystem": "Web",
+                    "description": "MatterLynk synchronises your Clio matters to iManage workspaces in real time. Automatic workspace creation, group security mapping, and field mapping — zero manual filing.",
+                    "url": "{{ config('app.url') }}",
+                    "provider": { "@id": "{{ config('app.url') }}/#organization" },
+                    "offers": {
+                        "@type": "Offer",
+                        "availability": "https://schema.org/InStock",
+                        "url": "{{ config('app.url') }}/enquiry"
+                    },
+                    "featureList": [
+                        "Real-time Clio webhook integration",
+                        "Automatic iManage workspace creation",
+                        "Template workspace support",
+                        "Group security mapping",
+                        "Bidirectional matter linking",
+                        "Configurable field mapping engine",
+                        "Multi-tenant architecture"
+                    ]
+                },
+                {
+                    "@type": "WebSite",
+                    "@id": "{{ config('app.url') }}/#website",
+                    "url": "{{ config('app.url') }}",
+                    "name": "MatterLynk",
+                    "publisher": { "@id": "{{ config('app.url') }}/#organization" }
+                }
+            ]
+        }
+        </script>
+
         @fonts
         @vite(['resources/css/app.css'])
     </head>
@@ -16,7 +100,7 @@
         {{-- ── NAV ──────────────────────────────────────────────────────────── --}}
         <header class="fixed inset-x-0 top-0 z-50 bg-depth-500/95 backdrop-blur border-b border-depth-400/20">
             <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-                <a href="#">
+                <a href="{{ route('home') }}">
                     <img src="/logo/matterlynk-horizontal-dark.svg" alt="{{ config('app.name', 'MatterLynk') }}" class="h-8 w-auto" />
                 </a>
 
@@ -279,14 +363,14 @@
         {{-- ── FOOTER ───────────────────────────────────────────────────────── --}}
         <footer class="border-t border-depth-400/20 bg-depth-500 py-10">
             <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 sm:flex-row lg:px-8">
-                <a href="#">
+                <a href="{{ route('home') }}">
                     <img src="/logo/matterlynk-horizontal-dark.svg" alt="{{ config('app.name', 'MatterLynk') }}" class="h-7 w-auto" />
                 </a>
                 <p class="text-xs text-neutral-500">&copy; {{ date('Y') }} MatterLynk. All rights reserved.</p>
                 <div class="flex items-center gap-6 text-xs text-neutral-500">
                     <a href="#" class="transition hover:text-neutral-300">Privacy</a>
                     <a href="#" class="transition hover:text-neutral-300">Terms</a>
-                    <a href="#" class="transition hover:text-neutral-300">Contact</a>
+                    <a href="{{ route('enquiry') }}" class="transition hover:text-neutral-300">Contact</a>
                 </div>
             </div>
         </footer>

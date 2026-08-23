@@ -53,6 +53,11 @@ class Enquiry extends Component
     public function render(): \Illuminate\View\View
     {
         return view('livewire.enquiry')
-            ->layout('layouts.auth.simple');
+            ->layout('layouts.auth.simple', [
+                'title'       => 'Request Access',
+                'description' => 'Request access to MatterLynk — the automated Clio to iManage integration platform. Eliminate manual workspace creation, enforce security mapping, and keep your matters in sync.',
+                'robots'      => 'index, follow',
+                'canonical'   => config('app.url').'/enquiry',
+            ]);
     }
 }
