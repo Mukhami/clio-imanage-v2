@@ -63,7 +63,7 @@ class WebhookController extends Controller
         // Dispatch asynchronously — return 200 immediately
         ProcessWebhook::dispatch(
             tenantId: $tenant->id,
-            webhookCLioId: $webhook?->clio_id ?? 0,
+            webhookId: (string) ($webhook?->clio_id ?? ''),
             rawPayload: $request->getContent(),
             headers: $request->headers->all(),
             correlationId: $request->header('X-Correlation-Id') ?? (string) Str::uuid(),

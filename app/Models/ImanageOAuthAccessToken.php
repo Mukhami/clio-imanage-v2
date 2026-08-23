@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ImanageOAuthAccessToken extends Model
 {
+    protected $table = 'imanage_oauth_access_tokens';
+
     protected $fillable = ['tenant_id', 'access_token', 'refresh_token', 'expires_at', 'revoked'];
 
     protected function casts(): array

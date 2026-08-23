@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Models\Library;
 use App\Models\Tenant;
 use App\Services\ImanageApiService;
 use Illuminate\Bus\Queueable;
@@ -23,6 +24,7 @@ class SyncImanageLibraries implements ShouldQueue
 
     public function __construct(
         public readonly int $tenantId,
+        public readonly bool $chainDataSync = false,
     ) {
         $this->onQueue('maintenance');
     }
@@ -32,12 +34,34 @@ class SyncImanageLibraries implements ShouldQueue
         return [60, 300];
     }
 
-    public function handle(ImanageApiService $imanage): void
+    public function handle(): void
     {
-        $tenant = Tenant::findOrFail($this->tenantId);
+        $tenant  = Tenant::findOrFail($this->tenantId);
+        $imanage = new ImanageApiService($tenant);
 
-        // TODO: Sync libraries via $imanage->getLibraries() → upsert Library records
+        $response  = $imanage->getLibraries();
+        $libraries = $response['data']['list'] ?? $response['data'] ?? [];
 
-        Log::info("iManage libraries sync completed for tenant {$tenant->name}");
+        foreach ($libraries as $lib) {
+            Library::updateOrCreate(
+                [
+                    'tenant_id'          => $tenant->id,
+                    'imanage_library_id' => $lib['id'],
+                ],
+                [
+                    'name'        => $lib['name'] ?? null,
+                    'description' => $lib['description'] ?? null,
+                ]
+            );
+        }
+
+        Log::info("Synced " . count($libraries) . " iManage libraries for tenant {$tenant->name}");
+
+        // Optionally chain a full data sync for every library just upserted
+        if ($this->chainDataSync) {
+            $tenant->libraries()->each(function (Library $library) {
+                SyncImanageData::dispatch($this->tenantId, $library->id);
+            });
+        }
     }
 }

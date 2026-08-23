@@ -12,12 +12,13 @@ class GetTemplate extends Request
     protected Method $method = Method::GET;
 
     public function __construct(
+        private readonly string $customerId,
         private readonly string $libraryId,
         private readonly string $templateId,
     ) {}
 
     public function resolveEndpoint(): string
     {
-        return "/libraries/{$this->libraryId}/templates/{$this->templateId}";
+        return "/customers/{$this->customerId}/libraries/{$this->libraryId}/templates/{$this->templateId}";
     }
 }

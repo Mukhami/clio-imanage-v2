@@ -17,8 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhook/*',
         ]);
 
+        // Apply security headers to all web responses
+        $middleware->web(append: [
+            \App\Http\Middleware\SecurityHeaders::class,
+        ]);
+
         $middleware->alias([
-            'correlation' => \App\Http\Middleware\SetCorrelationId::class,
+            'correlation'  => \App\Http\Middleware\SetCorrelationId::class,
             'tenant.scope' => \App\Http\Middleware\EnforceTenantScoping::class,
             'account.lock' => \App\Http\Middleware\CheckAccountLock::class,
         ]);

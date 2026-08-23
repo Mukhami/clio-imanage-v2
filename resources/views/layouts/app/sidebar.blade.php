@@ -11,22 +11,102 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Platform')" class="grid">
-                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('Dashboard') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
+
+                {{-- Admin section: Super Admin, Admin, Support --}}
+                @if (auth()->user()->hasAnyRole(['Super Admin', 'Admin', 'Support']))
+                    <flux:sidebar.group :heading="__('Admin')">
+                        <flux:sidebar.item
+                            icon="squares-2x2"
+                            :href="route('admin.dashboard')"
+                            :current="request()->routeIs('admin.dashboard')"
+                            wire:navigate
+                        >
+                            {{ __('Dashboard') }}
+                        </flux:sidebar.item>
+
+                        <flux:sidebar.item
+                            icon="building-office-2"
+                            :href="route('admin.tenants.index')"
+                            :current="request()->routeIs('admin.tenants.*')"
+                            wire:navigate
+                        >
+                            {{ __('Tenants') }}
+                        </flux:sidebar.item>
+
+                        <flux:sidebar.item
+                            icon="arrow-path"
+                            :href="route('admin.webhook-requests.index')"
+                            :current="request()->routeIs('admin.webhook-requests.*')"
+                            wire:navigate
+                        >
+                            {{ __('Webhook Requests') }}
+                        </flux:sidebar.item>
+
+                        <flux:sidebar.item
+                            icon="users"
+                            :href="route('admin.users.index')"
+                            :current="request()->routeIs('admin.users.*')"
+                            wire:navigate
+                        >
+                            {{ __('Users') }}
+                        </flux:sidebar.item>
+
+                        @if(auth()->user()->hasRole('Super Admin'))
+                        <flux:sidebar.item
+                            icon="shield-check"
+                            :href="route('admin.roles.index')"
+                            :current="request()->routeIs('admin.roles.*')"
+                            wire:navigate
+                        >
+                            {{ __('Roles & Permissions') }}
+                        </flux:sidebar.item>
+                        @endif
+                    </flux:sidebar.group>
+                @endif
+
+                {{-- Portal section: Tenant Admin, Tenant Viewer --}}
+                @if (auth()->user()->hasAnyRole(['Tenant Admin', 'Tenant Viewer']))
+                    <flux:sidebar.group :heading="__('Portal')">
+                        <flux:sidebar.item
+                            icon="squares-2x2"
+                            :href="route('portal.dashboard')"
+                            :current="request()->routeIs('portal.dashboard')"
+                            wire:navigate
+                        >
+                            {{ __('Dashboard') }}
+                        </flux:sidebar.item>
+
+                        <flux:sidebar.item
+                            icon="arrow-path"
+                            :href="route('portal.webhook-activity')"
+                            :current="request()->routeIs('portal.webhook-activity')"
+                            wire:navigate
+                        >
+                            {{ __('Webhook Activity') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endif
+
             </flux:sidebar.nav>
 
             <flux:spacer />
 
             <flux:sidebar.nav>
-                <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                    {{ __('Repository') }}
+                <flux:sidebar.item
+                    icon="bell"
+                    :href="route('notifications.index')"
+                    :current="request()->routeIs('notifications.*')"
+                    wire:navigate
+                >
+                    {{ __('Notifications') }}
+                    @php $unreadCount = auth()->user()->unreadNotifications()->count(); @endphp
+                    @if($unreadCount > 0)
+                        <flux:badge color="red" size="sm">{{ $unreadCount }}</flux:badge>
+                    @endif
                 </flux:sidebar.item>
 
-                <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
-                    {{ __('Documentation') }}
+                <flux:sidebar.item icon="cog-6-tooth" :href="route('profile.edit')" wire:navigate>
+                    {{ __('Settings') }}
                 </flux:sidebar.item>
             </flux:sidebar.nav>
 
@@ -39,7 +119,7 @@
 
             <flux:spacer />
 
-            <flux:dropdown position="top" align="end">
+            <flux:dropdown position="bottom" align="end">
                 <flux:profile
                     :initials="auth()->user()->initials()"
                     icon-trailing="chevron-down"

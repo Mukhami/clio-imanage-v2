@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\WebhookRequests;
 
 use App\Jobs\ReattemptWebhookRequest;
 use App\Models\WebhookRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Component;
 
@@ -20,7 +21,7 @@ class Show extends Component
 
     public function reattempt(): void
     {
-        ReattemptWebhookRequest::dispatch($this->webhookRequest);
+        ReattemptWebhookRequest::dispatch($this->webhookRequest->id, Auth::id());
 
         session()->flash('success', 'Reattempt queued successfully.');
     }

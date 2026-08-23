@@ -11,6 +11,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RolesAndPermissionsSeeder::class,
             ClioLocationsSeeder::class,
+            UsersSeeder::class,
+            WebhookTypesSeeder::class,
         ]);
     }
 }

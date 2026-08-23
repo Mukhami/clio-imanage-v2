@@ -1,20 +1,16 @@
 <div>
+    <flux:breadcrumbs class="mb-5">
+        <flux:breadcrumbs.item href="{{ route('admin.dashboard') }}" icon="home" />
+        <flux:breadcrumbs.item>Webhook Requests</flux:breadcrumbs.item>
+    </flux:breadcrumbs>
+
     <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-2xl font-semibold text-gray-900">Webhook Requests</h1>
+        <flux:heading size="xl">Webhook Requests</flux:heading>
     </div>
 
-    <!-- Filters -->
-    <div class="mb-4 flex flex-wrap gap-3">
-        <input
-            type="text"
-            wire:model.live="search"
-            placeholder="Correlation ID, Client ID, Matter ID..."
-            class="w-64 rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <select
-            wire:model.live="stageFilter"
-            class="rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
+    <div class="mb-4 flex items-center gap-2 flex-nowrap overflow-x-auto pb-1">
+        <flux:input wire:model.live="search" placeholder="Correlation ID, Client, Matter..." size="sm" class="min-w-52 w-52" />
+        <flux:select wire:model.live="stageFilter" size="sm" class="w-44" placeholder="All Stages">
             <option value="">All Stages</option>
             <option value="received">Received</option>
             <option value="validated">Validated</option>
@@ -26,83 +22,67 @@
             <option value="completed">Completed</option>
             <option value="failed">Failed</option>
             <option value="skipped">Skipped</option>
-        </select>
-        <select
-            wire:model.live="tenantFilter"
-            class="rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
+        </flux:select>
+        <flux:select wire:model.live="tenantFilter" size="sm" class="w-44" placeholder="All Tenants">
             <option value="">All Tenants</option>
             @foreach ($tenants as $tenant)
                 <option value="{{ $tenant->id }}">{{ $tenant->name }}</option>
             @endforeach
-        </select>
-        <input
-            type="date"
-            wire:model.live="dateFrom"
-            class="rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <input
-            type="date"
-            wire:model.live="dateTo"
-            class="rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        </flux:select>
+        <flux:input type="date" wire:model.live="dateFrom" size="sm" class="w-36" />
+        <flux:input type="date" wire:model.live="dateTo" size="sm" class="w-36" />
     </div>
 
-    <!-- Table -->
-    <div class="overflow-hidden rounded-lg bg-white shadow">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Tenant</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Correlation ID</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Stage</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Client ID</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Matter ID</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Created At</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
-                @forelse ($webhookRequests as $request)
-                    <tr>
-                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                            {{ $request->tenant?->name ?? '—' }}
-                        </td>
-                        <td class="whitespace-nowrap px-6 py-4 text-sm font-mono text-gray-700">
-                            {{ Str::limit($request->correlation_id, 20) }}
-                        </td>
-                        <td class="whitespace-nowrap px-6 py-4">
-                            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium
-                                @if ($request->processing_stage->value === 'completed') bg-green-100 text-green-800
-                                @elseif ($request->processing_stage->value === 'failed') bg-red-100 text-red-800
-                                @elseif ($request->processing_stage->value === 'skipped') bg-yellow-100 text-yellow-800
-                                @else bg-blue-100 text-blue-800 @endif">
-                                {{ $request->processing_stage->value }}
-                            </span>
-                        </td>
-                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                            {{ $request->retrieved_client_id ?? '—' }}
-                        </td>
-                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                            {{ $request->retrieved_matter_id ?? '—' }}
-                        </td>
-                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                            {{ $request->created_at->format('d M Y H:i') }}
-                        </td>
-                        <td class="whitespace-nowrap px-6 py-4 text-sm">
-                            <a href="{{ route('admin.webhook-requests.show', $request) }}" class="text-blue-600 hover:underline">View</a>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="px-6 py-8 text-center text-sm text-gray-400">No webhook requests found.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    <div class="mt-4">
-        {{ $webhookRequests->links() }}
+    <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+        <div class="px-4">
+            <flux:table>
+                <flux:table.columns>
+                    <flux:table.column>Tenant</flux:table.column>
+                    <flux:table.column>Correlation ID</flux:table.column>
+                    <flux:table.column>Stage</flux:table.column>
+                    <flux:table.column>Client ID</flux:table.column>
+                    <flux:table.column>Matter ID</flux:table.column>
+                    <flux:table.column>Created At</flux:table.column>
+                    <flux:table.column>Actions</flux:table.column>
+                </flux:table.columns>
+                <flux:table.rows>
+                    @forelse ($webhookRequests as $request)
+                        @php
+                            $stage = $request->processing_stage->value;
+                            $stageColor = match($stage) {
+                                'completed' => 'green',
+                                'failed'    => 'red',
+                                'skipped'   => 'yellow',
+                                default     => 'blue',
+                            };
+                        @endphp
+                        <flux:table.row :key="$request->id">
+                            <flux:table.cell>{{ $request->tenant?->name ?? '—' }}</flux:table.cell>
+                            <flux:table.cell>
+                                <span class="font-mono">{{ Str::limit($request->correlation_id, 20) }}</span>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <flux:badge :color="$stageColor" size="sm">{{ $stage }}</flux:badge>
+                            </flux:table.cell>
+                            <flux:table.cell>{{ $request->retrieved_client_id ?? '—' }}</flux:table.cell>
+                            <flux:table.cell>{{ $request->retrieved_matter_id ?? '—' }}</flux:table.cell>
+                            <flux:table.cell>{{ $request->created_at->format('d M Y H:i') }}</flux:table.cell>
+                            <flux:table.cell>
+                                <flux:button variant="ghost" size="sm" href="{{ route('admin.webhook-requests.show', $request) }}" wire:navigate>View</flux:button>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @empty
+                        <flux:table.row>
+                            <flux:table.cell colspan="7" class="py-8 text-center text-zinc-400">No webhook requests found.</flux:table.cell>
+                        </flux:table.row>
+                    @endforelse
+                </flux:table.rows>
+            </flux:table>
+        </div>
+        @if ($webhookRequests->hasPages())
+            <div class="px-4 py-3 border-t border-zinc-200 dark:border-zinc-700">
+                {{ $webhookRequests->links() }}
+            </div>
+        @endif
     </div>
 </div>

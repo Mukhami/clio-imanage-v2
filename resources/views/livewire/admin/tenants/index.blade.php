@@ -1,76 +1,71 @@
 <div>
+    <flux:breadcrumbs class="mb-5">
+        <flux:breadcrumbs.item href="{{ route('admin.dashboard') }}" icon="home" />
+        <flux:breadcrumbs.item>Tenants</flux:breadcrumbs.item>
+    </flux:breadcrumbs>
+
     <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-2xl font-semibold text-gray-900">Tenants</h1>
+        <flux:heading size="xl">Tenants</flux:heading>
+        <flux:button href="{{ route('admin.tenants.create') }}" size="sm" wire:navigate>New Tenant</flux:button>
     </div>
 
-    <!-- Filters -->
-    <div class="mb-4 flex gap-3">
-        <input
-            type="text"
-            wire:model.live="search"
-            placeholder="Search by name or slug..."
-            class="w-64 rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <select
-            wire:model.live="statusFilter"
-            class="rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
+    <div class="mb-4 flex items-center gap-3">
+        <flux:input wire:model.live="search" placeholder="Search by name or slug..." size="sm" class="w-64" />
+        <flux:select wire:model.live="statusFilter" size="sm" class="w-44" placeholder="All Statuses">
             <option value="">All Statuses</option>
             <option value="active">Active</option>
             <option value="pending">Pending</option>
             <option value="suspended">Suspended</option>
             <option value="archived">Archived</option>
-        </select>
+        </flux:select>
     </div>
 
-    <!-- Table -->
-    <div class="overflow-hidden rounded-lg bg-white shadow">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Name</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Clio Location</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Created At</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
-                @forelse ($tenants as $tenant)
-                    <tr>
-                        <td class="whitespace-nowrap px-6 py-4">
-                            <div class="font-medium text-gray-900">{{ $tenant->name }}</div>
-                            <div class="text-xs text-gray-400">{{ $tenant->slug }}</div>
-                        </td>
-                        <td class="whitespace-nowrap px-6 py-4">
-                            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium
-                                @if ($tenant->status->value === 'active') bg-green-100 text-green-800
-                                @elseif ($tenant->status->value === 'pending') bg-yellow-100 text-yellow-800
-                                @elseif ($tenant->status->value === 'suspended') bg-red-100 text-red-800
-                                @else bg-gray-100 text-gray-800 @endif">
-                                {{ $tenant->status->value }}
-                            </span>
-                        </td>
-                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                            {{ $tenant->clioLocation?->name ?? '—' }}
-                        </td>
-                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                            {{ $tenant->created_at->format('d M Y') }}
-                        </td>
-                        <td class="whitespace-nowrap px-6 py-4 text-sm">
-                            <a href="{{ route('admin.tenants.show', $tenant) }}" class="text-blue-600 hover:underline">View</a>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-400">No tenants found.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    <div class="mt-4">
-        {{ $tenants->links() }}
+    <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+        <div class="px-4">
+            <flux:table>
+                <flux:table.columns>
+                    <flux:table.column>Name</flux:table.column>
+                    <flux:table.column>Status</flux:table.column>
+                    <flux:table.column>Clio Location</flux:table.column>
+                    <flux:table.column>Created At</flux:table.column>
+                    <flux:table.column>Actions</flux:table.column>
+                </flux:table.columns>
+                <flux:table.rows>
+                    @forelse ($tenants as $tenant)
+                        @php
+                            $statusColor = match($tenant->status->value) {
+                                'active'    => 'green',
+                                'pending'   => 'yellow',
+                                'suspended' => 'red',
+                                default     => 'zinc',
+                            };
+                        @endphp
+                        <flux:table.row :key="$tenant->id">
+                            <flux:table.cell variant="strong">
+                                {{ $tenant->name }}
+                                <div class="text-xs font-normal text-zinc-400">{{ $tenant->slug }}</div>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <flux:badge :color="$statusColor" size="sm">{{ $tenant->status->value }}</flux:badge>
+                            </flux:table.cell>
+                            <flux:table.cell>{{ $tenant->clioLocation?->name ?? '—' }}</flux:table.cell>
+                            <flux:table.cell>{{ $tenant->created_at->format('d M Y') }}</flux:table.cell>
+                            <flux:table.cell>
+                                <flux:button variant="ghost" size="sm" href="{{ route('admin.tenants.show', $tenant) }}" wire:navigate>View</flux:button>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @empty
+                        <flux:table.row>
+                            <flux:table.cell colspan="5" class="py-8 text-center text-zinc-400">No tenants found.</flux:table.cell>
+                        </flux:table.row>
+                    @endforelse
+                </flux:table.rows>
+            </flux:table>
+        </div>
+        @if ($tenants->hasPages())
+            <div class="px-4 py-3 border-t border-zinc-200 dark:border-zinc-700">
+                {{ $tenants->links() }}
+            </div>
+        @endif
     </div>
 </div>

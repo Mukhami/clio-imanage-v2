@@ -1,73 +1,72 @@
 <div>
     <div class="mb-6">
-        <h1 class="text-2xl font-semibold text-gray-900">
-            Welcome, {{ auth()->user()->name }}
-        </h1>
-        <p class="text-sm text-gray-500">{{ auth()->user()->tenant?->name }}</p>
+        <flux:heading size="xl">Welcome, {{ auth()->user()->name }}</flux:heading>
+        <flux:text class="text-zinc-500">{{ auth()->user()->tenant?->name }}</flux:text>
     </div>
 
-    <!-- Stats -->
+    {{-- Stat Cards --}}
     <div class="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div class="rounded-lg bg-white p-5 shadow">
-            <p class="text-sm font-medium text-gray-500">Received Today</p>
-            <p class="mt-1 text-3xl font-bold text-gray-900">{{ $stats['received_today'] ?? 0 }}</p>
+        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+            <flux:text class="text-zinc-500">Received Today</flux:text>
+            <div class="mt-1 text-3xl font-bold text-zinc-900 dark:text-white">{{ $stats['received_today'] ?? 0 }}</div>
         </div>
-        <div class="rounded-lg bg-white p-5 shadow">
-            <p class="text-sm font-medium text-gray-500">Completed Today</p>
-            <p class="mt-1 text-3xl font-bold text-green-600">{{ $stats['completed_today'] ?? 0 }}</p>
+        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+            <flux:text class="text-zinc-500">Completed Today</flux:text>
+            <div class="mt-1 text-3xl font-bold text-green-600">{{ $stats['completed_today'] ?? 0 }}</div>
         </div>
-        <div class="rounded-lg bg-white p-5 shadow">
-            <p class="text-sm font-medium text-gray-500">Failed Today</p>
-            <p class="mt-1 text-3xl font-bold text-red-600">{{ $stats['failed_today'] ?? 0 }}</p>
+        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+            <flux:text class="text-zinc-500">Failed Today</flux:text>
+            <div class="mt-1 text-3xl font-bold text-red-600">{{ $stats['failed_today'] ?? 0 }}</div>
         </div>
-        <div class="rounded-lg bg-white p-5 shadow">
-            <p class="text-sm font-medium text-gray-500">Pending Today</p>
-            <p class="mt-1 text-3xl font-bold text-yellow-600">{{ $stats['pending_today'] ?? 0 }}</p>
+        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+            <flux:text class="text-zinc-500">Pending Today</flux:text>
+            <div class="mt-1 text-3xl font-bold text-yellow-600">{{ $stats['pending_today'] ?? 0 }}</div>
         </div>
     </div>
 
-    <!-- Recent Webhook Requests -->
-    <div class="overflow-hidden rounded-lg bg-white shadow">
-        <div class="border-b border-gray-200 px-6 py-4">
-            <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500">Recent Activity</h2>
+    {{-- Recent Activity --}}
+    <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 mb-6">
+        <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+            <flux:heading size="sm" class="uppercase tracking-wider text-zinc-500">Recent Activity</flux:heading>
         </div>
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Correlation ID</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Stage</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Client ID</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Matter ID</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Created At</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
-                @forelse ($recentRequests as $request)
-                    <tr>
-                        <td class="whitespace-nowrap px-6 py-4 font-mono text-sm text-gray-700">
-                            {{ Str::limit($request['correlation_id'], 20) }}
-                        </td>
-                        <td class="whitespace-nowrap px-6 py-4">
-                            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium
-                                @if ($request['processing_stage'] === 'completed') bg-green-100 text-green-800
-                                @elseif ($request['processing_stage'] === 'failed') bg-red-100 text-red-800
-                                @elseif ($request['processing_stage'] === 'skipped') bg-yellow-100 text-yellow-800
-                                @else bg-blue-100 text-blue-800 @endif">
-                                {{ $request['processing_stage'] }}
-                            </span>
-                        </td>
-                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ $request['retrieved_client_id'] ?? '—' }}</td>
-                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ $request['retrieved_matter_id'] ?? '—' }}</td>
-                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                            {{ \Carbon\Carbon::parse($request['created_at'])->format('d M Y H:i') }}
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-400">No activity today.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+        <div class="px-4">
+            <flux:table>
+                <flux:table.columns>
+                    <flux:table.column>Correlation ID</flux:table.column>
+                    <flux:table.column>Stage</flux:table.column>
+                    <flux:table.column>Client ID</flux:table.column>
+                    <flux:table.column>Matter ID</flux:table.column>
+                    <flux:table.column>Created At</flux:table.column>
+                </flux:table.columns>
+                <flux:table.rows>
+                    @forelse ($recentRequests as $request)
+                        @php
+                            $stage = $request['processing_stage'];
+                            $stageColor = match($stage) {
+                                'completed' => 'green',
+                                'failed'    => 'red',
+                                'skipped'   => 'yellow',
+                                default     => 'blue',
+                            };
+                        @endphp
+                        <flux:table.row>
+                            <flux:table.cell>
+                                <span class="font-mono">{{ Str::limit($request['correlation_id'], 20) }}</span>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <flux:badge :color="$stageColor" size="sm">{{ $stage }}</flux:badge>
+                            </flux:table.cell>
+                            <flux:table.cell>{{ $request['retrieved_client_id'] ?? '—' }}</flux:table.cell>
+                            <flux:table.cell>{{ $request['retrieved_matter_id'] ?? '—' }}</flux:table.cell>
+                            <flux:table.cell>{{ \Carbon\Carbon::parse($request['created_at'])->format('d M Y H:i') }}</flux:table.cell>
+                        </flux:table.row>
+                    @empty
+                        <flux:table.row>
+                            <flux:table.cell colspan="5" class="py-8 text-center text-zinc-400">No activity today.</flux:table.cell>
+                        </flux:table.row>
+                    @endforelse
+                </flux:table.rows>
+            </flux:table>
+        </div>
     </div>
 </div>

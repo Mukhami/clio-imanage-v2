@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'clio' => [
+        'redirect_uri' => env('CLIO_REDIRECT_URI', 'http://localhost:8000/oauth/clio/callback'),
+    ],
+
+    'imanage' => [
+        'redirect_uri' => env('IMANAGE_REDIRECT_URI', 'http://localhost:8000/oauth/imanage/callback'),
+    ],
+
 ];

@@ -15,13 +15,14 @@ class CreateWorkspace extends Request
     protected Method $method = Method::POST;
 
     public function __construct(
+        private readonly string $customerId,
         private readonly string $libraryId,
         private readonly array $data,
     ) {}
 
     public function resolveEndpoint(): string
     {
-        return "/libraries/{$this->libraryId}/workspaces";
+        return "/customers/{$this->customerId}/libraries/{$this->libraryId}/workspaces";
     }
 
     protected function defaultBody(): array

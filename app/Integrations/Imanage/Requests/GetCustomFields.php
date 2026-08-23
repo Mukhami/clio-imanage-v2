@@ -12,11 +12,12 @@ class GetCustomFields extends Request
     protected Method $method = Method::GET;
 
     public function __construct(
+        private readonly string $customerId,
         private readonly string $libraryId,
     ) {}
 
     public function resolveEndpoint(): string
     {
-        return "/libraries/{$this->libraryId}/workspaces/custom-field-definitions";
+        return "/customers/{$this->customerId}/libraries/{$this->libraryId}/workspaces/custom-field-definitions";
     }
 }

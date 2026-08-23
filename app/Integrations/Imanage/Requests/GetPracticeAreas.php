@@ -12,6 +12,7 @@ class GetPracticeAreas extends Request
     protected Method $method = Method::GET;
 
     public function __construct(
+        private readonly string $customerId,
         private readonly string $libraryId,
         private readonly int $limit = 100,
         private readonly int $skip = 0,
@@ -19,7 +20,7 @@ class GetPracticeAreas extends Request
 
     public function resolveEndpoint(): string
     {
-        return "/libraries/{$this->libraryId}/practice-groups";
+        return "/customers/{$this->customerId}/libraries/{$this->libraryId}/practice-groups";
     }
 
     protected function defaultQuery(): array

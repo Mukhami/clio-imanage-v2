@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Library;
 
 class TenantSetting extends Model
 {
@@ -36,5 +37,10 @@ class TenantSetting extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function library(): BelongsTo
+    {
+        return $this->belongsTo(Library::class);
     }
 }

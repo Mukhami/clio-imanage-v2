@@ -12,6 +12,7 @@ class GetGroups extends Request
     protected Method $method = Method::GET;
 
     public function __construct(
+        private readonly string $customerId,
         private readonly string $libraryId,
         private readonly int $limit = 100,
         private readonly int $skip = 0,
@@ -19,7 +20,7 @@ class GetGroups extends Request
 
     public function resolveEndpoint(): string
     {
-        return "/libraries/{$this->libraryId}/groups";
+        return "/customers/{$this->customerId}/libraries/{$this->libraryId}/groups";
     }
 
     protected function defaultQuery(): array

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ClioOAuthAccessToken extends Model
 {
+    protected $table = 'clio_oauth_access_tokens';
+
     protected $fillable = [
         'tenant_id',
         'access_token',
