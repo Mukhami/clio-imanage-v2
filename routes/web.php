@@ -64,6 +64,13 @@ Route::middleware(['auth', 'verified', 'role:Tenant Admin|Tenant Viewer'])
     ->group(function () {
         Route::get('/dashboard', Portal\Dashboard::class)->name('dashboard');
         Route::get('/webhook-activity', Portal\WebhookActivity::class)->name('webhook-activity');
+        Route::get('/webhook-requests/{webhookRequest}', Portal\WebhookRequestDetail::class)->name('webhook-requests.show');
+        Route::get('/settings', Portal\Settings::class)->name('settings');
+
+        // Tenant Admin only
+        Route::middleware('role:Tenant Admin')->group(function () {
+            Route::get('/users', Portal\Users::class)->name('users.index');
+        });
     });
 
 require __DIR__.'/settings.php';

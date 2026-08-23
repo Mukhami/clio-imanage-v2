@@ -81,10 +81,30 @@
                         <flux:sidebar.item
                             icon="arrow-path"
                             :href="route('portal.webhook-activity')"
-                            :current="request()->routeIs('portal.webhook-activity')"
+                            :current="request()->routeIs('portal.webhook-activity') || request()->routeIs('portal.webhook-requests.*')"
                             wire:navigate
                         >
                             {{ __('Webhook Activity') }}
+                        </flux:sidebar.item>
+
+                        @if (auth()->user()->hasRole('Tenant Admin'))
+                            <flux:sidebar.item
+                                icon="users"
+                                :href="route('portal.users.index')"
+                                :current="request()->routeIs('portal.users.*')"
+                                wire:navigate
+                            >
+                                {{ __('Users') }}
+                            </flux:sidebar.item>
+                        @endif
+
+                        <flux:sidebar.item
+                            icon="cog-6-tooth"
+                            :href="route('portal.settings')"
+                            :current="request()->routeIs('portal.settings')"
+                            wire:navigate
+                        >
+                            {{ __('Settings') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
                 @endif

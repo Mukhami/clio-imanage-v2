@@ -37,6 +37,7 @@
                     <flux:table.column>Client ID</flux:table.column>
                     <flux:table.column>Matter ID</flux:table.column>
                     <flux:table.column>Created At</flux:table.column>
+                    <flux:table.column></flux:table.column>
                 </flux:table.columns>
                 <flux:table.rows>
                     @forelse ($recentRequests as $request)
@@ -59,10 +60,18 @@
                             <flux:table.cell>{{ $request['retrieved_client_id'] ?? '—' }}</flux:table.cell>
                             <flux:table.cell>{{ $request['retrieved_matter_id'] ?? '—' }}</flux:table.cell>
                             <flux:table.cell>{{ \Carbon\Carbon::parse($request['created_at'])->format('d M Y H:i') }}</flux:table.cell>
+                            <flux:table.cell>
+                                <flux:button
+                                    size="xs"
+                                    variant="ghost"
+                                    href="{{ route('portal.webhook-requests.show', $request['id']) }}"
+                                    wire:navigate
+                                >View</flux:button>
+                            </flux:table.cell>
                         </flux:table.row>
                     @empty
                         <flux:table.row>
-                            <flux:table.cell colspan="5" class="py-8 text-center text-zinc-400">No activity today.</flux:table.cell>
+                            <flux:table.cell colspan="6" class="py-8 text-center text-zinc-400">No activity today.</flux:table.cell>
                         </flux:table.row>
                     @endforelse
                 </flux:table.rows>

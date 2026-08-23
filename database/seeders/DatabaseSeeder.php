@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             ClioLocationsSeeder::class,
             UsersSeeder::class,
             WebhookTypesSeeder::class,
+            TenantSeeder::class,
         ]);
     }
 }
