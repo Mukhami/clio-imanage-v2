@@ -26,7 +26,7 @@ class WebhookFactory extends Factory
                 ['model' => 'Matter', 'event' => 'matter.created'],
                 ['name' => 'Matter Created'],
             ),
-            'clio_id'         => (string) fake()->numerify('########'),
+            'clio_id'         => fake()->numberBetween(10000000, 99999999),
             'url'             => fake()->url(),
             'shared_secret'   => Str::random(64),
             'status'          => WebhookStatus::Active,

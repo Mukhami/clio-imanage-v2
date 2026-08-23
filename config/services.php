@@ -36,10 +36,15 @@ return [
     ],
 
     'clio' => [
+        'key'          => env('CLIO_APP_KEY'),
+        'secret'       => env('CLIO_APP_SECRET'),
         'redirect_uri' => env('CLIO_REDIRECT_URI', 'http://localhost:8000/oauth/clio/callback'),
     ],
 
     'imanage' => [
+        'api_url'      => env('IMANAGE_API_URL'),
+        'app_key'      => env('IMANAGE_APP_KEY'),
+        'app_secret'   => env('IMANAGE_APP_SECRET'),
         'redirect_uri' => env('IMANAGE_REDIRECT_URI', 'http://localhost:8000/oauth/imanage/callback'),
     ],
 

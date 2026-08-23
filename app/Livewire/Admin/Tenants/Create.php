@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\NewTenantRegistered;
 use App\Notifications\UserInvited;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -50,6 +51,11 @@ class Create extends Component
 
     public bool $enableWorkspaceLinkCustomField = false;
 
+    // Credential test feedback
+    public ?string $credentialTestStatus = null;
+
+    public string $credentialTestMessage = '';
+
     // Initial Tenant Admin
     public bool $createAdmin = false;
 
@@ -57,9 +63,75 @@ class Create extends Component
 
     public string $adminEmail = '';
 
+    public function mount(): void
+    {
+        $this->clioAppId        = (string) config('services.clio.key', '');
+        $this->clioAppSecret    = (string) config('services.clio.secret', '');
+        $this->imanageCloudUrl  = (string) config('services.imanage.api_url', '');
+        $this->imanageAppId     = (string) config('services.imanage.app_key', '');
+        $this->imanageAppSecret = (string) config('services.imanage.app_secret', '');
+    }
+
     public function updatingName(string $value): void
     {
         $this->slug = Str::slug($value);
+    }
+
+    public function testImanageCredentials(): void
+    {
+        $this->validate([
+            'imanageCloudUrl' => 'required|url',
+            'imanageUsername' => 'required|string',
+            'imanagePassword' => 'required|string',
+        ]);
+
+        $this->credentialTestStatus  = null;
+        $this->credentialTestMessage = '';
+
+        try {
+            $baseUrl = rtrim($this->imanageCloudUrl, '/').'/work/api/v2';
+
+            $authResponse = Http::post("{$baseUrl}/session", [
+                'username' => $this->imanageUsername,
+                'password' => $this->imanagePassword,
+            ]);
+
+            if (! $authResponse->successful()) {
+                $this->credentialTestStatus  = 'error';
+                $this->credentialTestMessage = 'Authentication failed: '.($authResponse->json('error_description') ?? $authResponse->json('error') ?? "HTTP {$authResponse->status()}");
+
+                return;
+            }
+
+            $token = $authResponse->json('data.token');
+
+            $customersResponse = Http::withHeaders([
+                'X-Auth-Token' => $token,
+                'Accept'       => 'application/json',
+            ])->get("{$baseUrl}/customers");
+
+            if (! $customersResponse->successful()) {
+                $this->credentialTestStatus  = 'warning';
+                $this->credentialTestMessage = 'Authenticated successfully, but could not retrieve customer list.';
+
+                return;
+            }
+
+            $customers  = $customersResponse->json('data');
+            $customerId = is_array($customers) ? ($customers[0]['id'] ?? null) : null;
+
+            if ($customerId) {
+                $this->imanageCustomerId     = (string) $customerId;
+                $this->credentialTestStatus  = 'success';
+                $this->credentialTestMessage = "Connected successfully. Customer ID \"{$customerId}\" has been populated.";
+            } else {
+                $this->credentialTestStatus  = 'warning';
+                $this->credentialTestMessage = 'Authenticated successfully, but no customer ID was found in the response.';
+            }
+        } catch (\Throwable $e) {
+            $this->credentialTestStatus  = 'error';
+            $this->credentialTestMessage = 'Connection error: '.$e->getMessage();
+        }
     }
 
     public function save(): void

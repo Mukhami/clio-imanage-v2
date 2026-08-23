@@ -69,19 +69,17 @@
                 <flux:heading size="sm" class="uppercase tracking-wider text-zinc-500">Clio Credentials</flux:heading>
             </div>
             <div class="p-6 space-y-4">
-                <flux:text class="text-xs text-zinc-500">These are stored encrypted.</flux:text>
+                <flux:text class="text-xs text-zinc-500">Stored encrypted. Leave blank to keep the current value.</flux:text>
 
                 <flux:field>
                     <flux:label>Clio App ID</flux:label>
-                    <flux:input wire:model="clioAppId" type="password" placeholder="••••••••" />
-                    <flux:description>Leave blank to keep current value</flux:description>
+                    <flux:input wire:model="clioAppId" type="password" viewable placeholder="••••••••" />
                     <flux:error name="clioAppId" />
                 </flux:field>
 
                 <flux:field>
                     <flux:label>Clio App Secret</flux:label>
-                    <flux:input wire:model="clioAppSecret" type="password" placeholder="••••••••" />
-                    <flux:description>Leave blank to keep current value</flux:description>
+                    <flux:input wire:model="clioAppSecret" type="password" viewable placeholder="••••••••" />
                     <flux:error name="clioAppSecret" />
                 </flux:field>
             </div>
@@ -95,45 +93,68 @@
             <div class="p-6 space-y-4">
                 <flux:field>
                     <flux:label>iManage Cloud URL</flux:label>
-                    <flux:input wire:model="imanageCloudUrl" placeholder="https://..." />
+                    <flux:input wire:model="imanageCloudUrl" placeholder="https://cloudimanage.com" />
                     <flux:error name="imanageCloudUrl" />
                 </flux:field>
 
                 <flux:field>
-                    <flux:label>iManage Customer ID</flux:label>
-                    <flux:input wire:model="imanageCustomerId" placeholder="Customer ID" />
-                    <flux:error name="imanageCustomerId" />
-                </flux:field>
-
-                <flux:field>
                     <flux:label>iManage App ID</flux:label>
-                    <flux:input wire:model="imanageAppId" type="password" placeholder="••••••••" />
+                    <flux:input wire:model="imanageAppId" type="password" viewable placeholder="••••••••" />
                     <flux:description>Leave blank to keep current value</flux:description>
                     <flux:error name="imanageAppId" />
                 </flux:field>
 
                 <flux:field>
                     <flux:label>iManage App Secret</flux:label>
-                    <flux:input wire:model="imanageAppSecret" type="password" placeholder="••••••••" />
+                    <flux:input wire:model="imanageAppSecret" type="password" viewable placeholder="••••••••" />
                     <flux:description>Leave blank to keep current value</flux:description>
                     <flux:error name="imanageAppSecret" />
                 </flux:field>
 
                 <flux:field>
                     <flux:label>iManage Username</flux:label>
-                    <flux:input wire:model="imanageUsername" type="password" placeholder="••••••••" />
+                    <flux:input wire:model="imanageUsername" placeholder="service-account@firm.com" />
                     <flux:description>Leave blank to keep current value</flux:description>
                     <flux:error name="imanageUsername" />
                 </flux:field>
 
                 <flux:field>
                     <flux:label>iManage Password</flux:label>
-                    <flux:input wire:model="imanagePassword" type="password" placeholder="••••••••" />
+                    <flux:input wire:model="imanagePassword" type="password" viewable placeholder="••••••••" />
                     <flux:description>Leave blank to keep current value</flux:description>
                     <flux:error name="imanagePassword" />
                 </flux:field>
 
                 <flux:checkbox wire:model="passwordAuthentication" label="Password Authentication" />
+
+                {{-- Test credentials --}}
+                <div class="pt-2 border-t border-zinc-100 dark:border-zinc-700">
+                    <div class="flex items-center gap-3">
+                        <flux:button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            wire:click="testImanageCredentials"
+                            wire:loading.attr="disabled"
+                            wire:target="testImanageCredentials"
+                        >
+                            <span wire:loading.remove wire:target="testImanageCredentials">Test iManage Credentials</span>
+                            <span wire:loading wire:target="testImanageCredentials">Testing...</span>
+                        </flux:button>
+                        @if ($credentialTestStatus)
+                            <flux:text class="text-xs {{ $credentialTestStatus === 'success' ? 'text-green-600 dark:text-green-400' : ($credentialTestStatus === 'error' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400') }}">
+                                {{ $credentialTestMessage }}
+                            </flux:text>
+                        @endif
+                    </div>
+                </div>
+
+                <flux:field>
+                    <flux:label>iManage Customer ID</flux:label>
+                    <flux:input wire:model="imanageCustomerId" placeholder="Auto-populated on test, or enter manually" />
+                    <flux:description>Fetched automatically when you test credentials above.</flux:description>
+                    <flux:error name="imanageCustomerId" />
+                </flux:field>
             </div>
         </div>
 
