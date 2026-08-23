@@ -29,7 +29,6 @@ class CreateWorkspaceFolders implements ShouldQueue
         public readonly int $webhookRequestId,
         public readonly int $tenantId,
     ) {
-        $this->onQueue('long_term');
     }
 
     public function backoff(): array

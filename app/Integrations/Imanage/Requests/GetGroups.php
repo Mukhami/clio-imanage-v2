@@ -14,8 +14,7 @@ class GetGroups extends Request
     public function __construct(
         private readonly string $customerId,
         private readonly string $libraryId,
-        private readonly int $limit = 100,
-        private readonly int $skip = 0,
+        private readonly int $limit = 9999,
     ) {}
 
     public function resolveEndpoint(): string
@@ -26,8 +25,8 @@ class GetGroups extends Request
     protected function defaultQuery(): array
     {
         return [
+            'total' => 'true',
             'limit' => $this->limit,
-            'skip'  => $this->skip,
         ];
     }
 }

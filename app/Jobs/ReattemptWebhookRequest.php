@@ -24,7 +24,6 @@ class ReattemptWebhookRequest implements ShouldQueue
         public readonly int $webhookRequestId,
         public readonly ?int $reattemptedByUserId = null,
     ) {
-        $this->onQueue('webhooks');
     }
 
     public function backoff(): array
@@ -48,13 +47,13 @@ class ReattemptWebhookRequest implements ShouldQueue
 
         // Determine restart point based on activity flags
         if (! $wr->client_activity_complete || ! $wr->workspace_activity_complete) {
-            UpdateMatter::dispatch($wr->id, $wr->tenant_id)->onQueue('imanage');
+            UpdateMatter::dispatch($wr->id, $wr->tenant_id);
         } elseif (! $wr->folder_activity_complete) {
-            CreateWorkspaceFolders::dispatch($wr->id, $wr->tenant_id)->onQueue('long_term');
+            CreateWorkspaceFolders::dispatch($wr->id, $wr->tenant_id);
         } elseif (! $wr->security_activity_complete) {
-            PostWorkspaceSecurity::dispatch($wr->id, $wr->tenant_id)->onQueue('long_term');
+            PostWorkspaceSecurity::dispatch($wr->id, $wr->tenant_id);
         } elseif (! $wr->workspace_link_custom_field_populated) {
-            PopulateWorkspaceLinkCustomField::dispatch($wr->id)->onQueue('long_term');
+            PopulateWorkspaceLinkCustomField::dispatch($wr->id);
         } else {
             $wr->advanceTo(ProcessingStage::Completed);
             $wr->completed_at = now();

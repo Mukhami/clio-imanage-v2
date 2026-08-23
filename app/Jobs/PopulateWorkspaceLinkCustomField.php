@@ -27,7 +27,6 @@ class PopulateWorkspaceLinkCustomField implements ShouldQueue
     public function __construct(
         public readonly int $webhookRequestId,
     ) {
-        $this->onQueue('long_term');
     }
 
     public function backoff(): array

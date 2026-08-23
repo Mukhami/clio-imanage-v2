@@ -14,20 +14,21 @@ class GetPracticeAreas extends Request
     public function __construct(
         private readonly string $customerId,
         private readonly string $libraryId,
-        private readonly int $limit = 100,
-        private readonly int $skip = 0,
+        private readonly int $limit = 9999,
+        private readonly int $offset = 0,
     ) {}
 
     public function resolveEndpoint(): string
     {
-        return "/customers/{$this->customerId}/libraries/{$this->libraryId}/practice-groups";
+        return "/customers/{$this->customerId}/libraries/{$this->libraryId}/customs/custom29";
     }
 
     protected function defaultQuery(): array
     {
         return [
-            'limit' => $this->limit,
-            'skip'  => $this->skip,
+            'total'  => 'true',
+            'limit'  => $this->limit,
+            'offset' => $this->offset,
         ];
     }
 }

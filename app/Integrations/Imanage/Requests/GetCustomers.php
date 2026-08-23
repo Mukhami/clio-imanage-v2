@@ -7,16 +7,12 @@ namespace App\Integrations\Imanage\Requests;
 use Saloon\Enums\Method;
 use Saloon\Http\Request;
 
-class GetLibraries extends Request
+class GetCustomers extends Request
 {
     protected Method $method = Method::GET;
 
-    public function __construct(
-        private readonly string $customerId,
-    ) {}
-
     public function resolveEndpoint(): string
     {
-        return "/customers/{$this->customerId}/libraries";
+        return '/customers';
     }
 }

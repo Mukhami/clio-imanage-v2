@@ -37,7 +37,6 @@ class UpdateMatter implements ShouldQueue
         public readonly int $webhookRequestId,
         public readonly int $tenantId,
     ) {
-        $this->onQueue('imanage');
     }
 
     public function backoff(): array
@@ -374,7 +373,7 @@ class UpdateMatter implements ShouldQueue
 
                 // Dispatch folder creation job for newly created workspaces
                 CreateWorkspaceFolders::dispatch($wr->id, $tenant->id)
-                    ->onQueue('long_term');
+                    ;
             }
 
             $wr->workspace_activity_complete = true;
@@ -431,11 +430,11 @@ class UpdateMatter implements ShouldQueue
 
             // 21. Dispatch downstream jobs
             PostWorkspaceSecurity::dispatch($wr->id, $tenant->id)
-                ->onQueue('long_term');
+                ;
 
             if ($tenant->enable_workspace_link_custom_field) {
                 PopulateWorkspaceLinkCustomField::dispatch($wr->id)
-                    ->onQueue('long_term');
+                    ;
             }
 
             $wr->processing_stage = ProcessingStage::PostProcessing;

@@ -38,7 +38,6 @@ class ProcessWebhook implements ShouldQueue
         public readonly array $headers,
         public readonly string $correlationId,
     ) {
-        $this->onQueue('webhooks');
     }
 
     public function backoff(): array
@@ -122,7 +121,7 @@ class ProcessWebhook implements ShouldQueue
 
             // 13. Hand off to UpdateMatter on the imanage queue
             UpdateMatter::dispatch($webhookRequest->id, $this->tenantId)
-                ->onQueue('imanage');
+                ;
 
         } catch (Throwable $e) {
             if ($webhookRequest !== null) {

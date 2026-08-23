@@ -27,7 +27,6 @@ class SyncClioData implements ShouldQueue
     public function __construct(
         public readonly int $tenantId,
     ) {
-        $this->onQueue('maintenance');
     }
 
     public function backoff(): array

@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Tenants;
 
+use App\Integrations\Imanage\ImanageAuthConnector;
+use App\Integrations\Imanage\ImanageDiscoveryConnector;
+use App\Integrations\Imanage\Requests\GetDiscovery;
+use App\Integrations\Imanage\Requests\GetOAuthToken;
 use App\Models\ClioLocation;
 use App\Models\Tenant;
-use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -61,17 +64,17 @@ class Edit extends Component
         $this->reference       = $this->tenant->reference ?? '';
         $this->status          = $this->tenant->status->value;
         $this->clioLocationId  = (string) ($this->tenant->clio_location_id ?? '');
-        $this->imanageCloudUrl = $this->tenant->imanage_cloud_url
+        $this->imanageCloudUrl   = $this->tenant->imanage_cloud_url
             ?? (string) config('services.imanage.api_url', '');
         $this->imanageCustomerId = $this->tenant->imanage_customer_id ?? '';
 
-        // Encrypted credential fields — leave blank so user must re-enter to change
-        $this->clioAppId      = '';
-        $this->clioAppSecret  = '';
-        $this->imanageAppId   = '';
-        $this->imanageAppSecret = '';
-        $this->imanageUsername = '';
-        $this->imanagePassword = '';
+        // Encrypted fields — decrypted transparently by the model cast
+        $this->clioAppId        = (string) ($this->tenant->clio_app_id ?? '');
+        $this->clioAppSecret    = (string) ($this->tenant->clio_app_secret ?? '');
+        $this->imanageAppId     = (string) ($this->tenant->imanage_app_id ?? '');
+        $this->imanageAppSecret = (string) ($this->tenant->imanage_app_secret ?? '');
+        $this->imanageUsername  = (string) ($this->tenant->imanage_username ?? '');
+        $this->imanagePassword  = (string) ($this->tenant->imanage_password ?? '');
 
         $this->passwordAuthentication          = (bool) $this->tenant->password_authentication;
         $this->hasGroupSecurityMapping         = (bool) $this->tenant->has_group_security_mapping;
@@ -81,45 +84,52 @@ class Edit extends Component
     public function testImanageCredentials(): void
     {
         $this->validate([
-            'imanageCloudUrl' => 'required|url',
-            'imanageUsername' => 'required|string',
-            'imanagePassword' => 'required|string',
+            'imanageCloudUrl'  => 'required|url',
+            'imanageAppId'     => 'required|string',
+            'imanageAppSecret' => 'required|string',
+            'imanageUsername'  => 'required|string',
+            'imanagePassword'  => 'required|string',
         ]);
 
         $this->credentialTestStatus  = null;
         $this->credentialTestMessage = '';
 
         try {
-            $baseUrl = rtrim($this->imanageCloudUrl, '/').'/work/api/v2';
+            $authConnector = new ImanageAuthConnector($this->imanageCloudUrl);
+            $tokenResponse = $authConnector->send(new GetOAuthToken(
+                $this->imanageUsername,
+                $this->imanagePassword,
+                $this->imanageAppId,
+                $this->imanageAppSecret,
+            ));
 
-            $authResponse = Http::post("{$baseUrl}/session", [
-                'username' => $this->imanageUsername,
-                'password' => $this->imanagePassword,
-            ]);
-
-            if (! $authResponse->successful()) {
+            if ($tokenResponse->failed()) {
                 $this->credentialTestStatus  = 'error';
-                $this->credentialTestMessage = 'Authentication failed: '.($authResponse->json('error_description') ?? $authResponse->json('error') ?? "HTTP {$authResponse->status()}");
+                $this->credentialTestMessage = 'Authentication failed: '.$this->extractSaloonError($tokenResponse);
 
                 return;
             }
 
-            $token = $authResponse->json('data.token');
+            $accessToken = $tokenResponse->json('access_token');
 
-            $customersResponse = Http::withHeaders([
-                'X-Auth-Token' => $token,
-                'Accept'       => 'application/json',
-            ])->get("{$baseUrl}/customers");
+            if (! is_string($accessToken) || $accessToken === '') {
+                $this->credentialTestStatus  = 'error';
+                $this->credentialTestMessage = 'Authentication succeeded but no access token was returned.';
 
-            if (! $customersResponse->successful()) {
+                return;
+            }
+
+            $discoveryConnector = new ImanageDiscoveryConnector($this->imanageCloudUrl, $accessToken);
+            $discoveryResponse  = $discoveryConnector->send(new GetDiscovery());
+
+            if ($discoveryResponse->failed()) {
                 $this->credentialTestStatus  = 'warning';
-                $this->credentialTestMessage = 'Authenticated successfully, but could not retrieve customer list.';
+                $this->credentialTestMessage = 'Authenticated successfully, but discovery request failed.';
 
                 return;
             }
 
-            $customers  = $customersResponse->json('data');
-            $customerId = is_array($customers) ? ($customers[0]['id'] ?? null) : null;
+            $customerId = $discoveryResponse->json('data.user.customer_id');
 
             if ($customerId) {
                 $this->imanageCustomerId     = (string) $customerId;
@@ -127,7 +137,7 @@ class Edit extends Component
                 $this->credentialTestMessage = "Connected successfully. Customer ID \"{$customerId}\" has been populated.";
             } else {
                 $this->credentialTestStatus  = 'warning';
-                $this->credentialTestMessage = 'Authenticated successfully, but no customer ID was found in the response.';
+                $this->credentialTestMessage = 'Authenticated successfully, but no customer ID found in the discovery response.';
             }
         } catch (\Throwable $e) {
             $this->credentialTestStatus  = 'error';
@@ -167,29 +177,12 @@ class Edit extends Component
             'enable_workspace_link_custom_field' => $this->enableWorkspaceLinkCustomField,
         ];
 
-        if ($this->clioAppId !== '') {
-            $data['clio_app_id'] = $this->clioAppId;
-        }
-
-        if ($this->clioAppSecret !== '') {
-            $data['clio_app_secret'] = $this->clioAppSecret;
-        }
-
-        if ($this->imanageAppId !== '') {
-            $data['imanage_app_id'] = $this->imanageAppId;
-        }
-
-        if ($this->imanageAppSecret !== '') {
-            $data['imanage_app_secret'] = $this->imanageAppSecret;
-        }
-
-        if ($this->imanageUsername !== '') {
-            $data['imanage_username'] = $this->imanageUsername;
-        }
-
-        if ($this->imanagePassword !== '') {
-            $data['imanage_password'] = $this->imanagePassword;
-        }
+        $data['clio_app_id']        = $this->clioAppId ?: null;
+        $data['clio_app_secret']    = $this->clioAppSecret ?: null;
+        $data['imanage_app_id']     = $this->imanageAppId ?: null;
+        $data['imanage_app_secret'] = $this->imanageAppSecret ?: null;
+        $data['imanage_username']   = $this->imanageUsername ?: null;
+        $data['imanage_password']   = $this->imanagePassword ?: null;
 
         $this->tenant->update($data);
 
@@ -202,6 +195,17 @@ class Edit extends Component
     public function clioLocations()
     {
         return ClioLocation::orderBy('name')->get();
+    }
+
+    private function extractSaloonError(\Saloon\Http\Response $response): string
+    {
+        $raw = $response->json('error_description') ?? $response->json('error') ?? "HTTP {$response->status()}";
+
+        if (is_array($raw)) {
+            return implode('; ', array_map('strval', $raw));
+        }
+
+        return (string) $raw;
     }
 
     public function render(): View

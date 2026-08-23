@@ -29,7 +29,6 @@ class PostWorkspaceSecurity implements ShouldQueue
         public readonly int $webhookRequestId,
         public readonly int $tenantId,
     ) {
-        $this->onQueue('long_term');
     }
 
     public function backoff(): array
@@ -120,7 +119,7 @@ class PostWorkspaceSecurity implements ShouldQueue
             $wr->save();
 
             AuditWorkspaceSecurity::dispatch($wr->id, $tenant->id)
-                ->onQueue('long_term');
+                ;
 
         } catch (Throwable $e) {
             $wr->markFailed($e->getMessage());
