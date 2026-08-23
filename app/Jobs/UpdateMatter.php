@@ -440,8 +440,11 @@ class UpdateMatter implements ShouldQueue
             }
 
             // 21. Dispatch downstream jobs
-            PostWorkspaceSecurity::dispatch($wr->id, $tenant->id)
-                ;
+            if ($tenant->has_group_security_mapping) {
+                ApplyGroupSecurityMapping::dispatch($wr->id, $tenant->id);
+            } else {
+                PostWorkspaceSecurity::dispatch($wr->id, $tenant->id);
+            }
 
             if ($tenant->enable_workspace_link_custom_field) {
                 PopulateWorkspaceLinkCustomField::dispatch($wr->id)
