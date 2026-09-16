@@ -19,6 +19,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
+use Saloon\Exceptions\Request\RequestException;
 use Throwable;
 
 class ApplyGroupSecurityMapping implements ShouldQueue
@@ -96,10 +97,34 @@ class ApplyGroupSecurityMapping implements ShouldQueue
                 );
 
                 if (! empty($include)) {
-                    $imanage->applyWorkspaceSecurity($customerId, $libraryId, $targetWorkspaceId, [
+                    $secPayload = [
                         'default_security' => 'private',
                         'members'          => ['include' => $include],
-                    ]);
+                    ];
+
+                    try {
+                        $imanage->applyWorkspaceSecurity($customerId, $libraryId, $targetWorkspaceId, $secPayload);
+
+                        $wr->logApiCall(
+                            'Apply Workspace Security (Group Mapping)',
+                            'PUT',
+                            "libraries/{$libraryId}/workspaces/{$targetWorkspaceId}/security",
+                            $secPayload,
+                            [],
+                            200,
+                        );
+                    } catch (RequestException $e) {
+                        $wr->logApiCall(
+                            'Apply Workspace Security (FAILED)',
+                            $e->getPendingRequest()->getMethod()->value,
+                            $e->getPendingRequest()->getUrl(),
+                            $secPayload,
+                            $e->getResponse()->json() ?? ['raw' => $e->getResponse()->body()],
+                            $e->getResponse()->status(),
+                        );
+                        throw $e;
+                    }
+
                     $securityApplied = true;
                     $sentPayload     = $include;
                 }

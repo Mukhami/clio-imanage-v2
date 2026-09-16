@@ -29,6 +29,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
+use Saloon\Exceptions\Request\RequestException;
 use Throwable;
 
 class UpdateMatter implements ShouldQueue
@@ -205,14 +206,42 @@ class UpdateMatter implements ShouldQueue
                 : null;
 
             // 14. Find/create client in iManage
-            $clientData = $imanage->findOrUpsertClient(
-                $customerId,
-                $libraryId,
-                $wr->retrieved_client_id,
-                $clientDescription,
-                $setting->default_enabled ?? true,
-                $setting->default_hipaa ?? false,
-            );
+            $clientPayload = [
+                'client_key'  => $wr->retrieved_client_id,
+                'description' => $clientDescription,
+                'enabled'     => $setting->default_enabled ?? true,
+                'hipaa'       => $setting->default_hipaa ?? false,
+            ];
+
+            try {
+                $clientData = $imanage->findOrUpsertClient(
+                    $customerId,
+                    $libraryId,
+                    $wr->retrieved_client_id,
+                    $clientDescription,
+                    $setting->default_enabled ?? true,
+                    $setting->default_hipaa ?? false,
+                );
+
+                $wr->logApiCall(
+                    'Find/Upsert Client',
+                    'GET+PATCH/POST',
+                    "libraries/{$libraryId}/clients/{$wr->retrieved_client_id}",
+                    $clientPayload,
+                    $clientData,
+                    200,
+                );
+            } catch (RequestException $e) {
+                $wr->logApiCall(
+                    'Find/Upsert Client (FAILED)',
+                    $e->getPendingRequest()->getMethod()->value,
+                    $e->getPendingRequest()->getUrl(),
+                    $clientPayload,
+                    $e->getResponse()->json() ?? ['raw' => $e->getResponse()->body()],
+                    $e->getResponse()->status(),
+                );
+                throw $e;
+            }
 
             $imanageClient = ImanageClient::updateOrCreate(
                 [
@@ -238,15 +267,44 @@ class UpdateMatter implements ShouldQueue
             $imanageMatter = null;
 
             if (! empty($wr->retrieved_matter_id)) {
-                $matterData = $imanage->findOrUpsertMatter(
-                    $customerId,
-                    $libraryId,
-                    $wr->retrieved_matter_id,
-                    $wr->retrieved_client_id,
-                    $matterDescription,
-                    $setting->default_enabled ?? true,
-                    $setting->default_hipaa ?? false,
-                );
+                $matterPayload = [
+                    'matter_key'  => $wr->retrieved_matter_id,
+                    'client_key'  => $wr->retrieved_client_id,
+                    'description' => $matterDescription,
+                    'enabled'     => $setting->default_enabled ?? true,
+                    'hipaa'       => $setting->default_hipaa ?? false,
+                ];
+
+                try {
+                    $matterData = $imanage->findOrUpsertMatter(
+                        $customerId,
+                        $libraryId,
+                        $wr->retrieved_matter_id,
+                        $wr->retrieved_client_id,
+                        $matterDescription,
+                        $setting->default_enabled ?? true,
+                        $setting->default_hipaa ?? false,
+                    );
+
+                    $wr->logApiCall(
+                        'Find/Upsert Matter',
+                        'GET+PATCH/POST',
+                        "libraries/{$libraryId}/matters/{$wr->retrieved_matter_id}",
+                        $matterPayload,
+                        $matterData,
+                        200,
+                    );
+                } catch (RequestException $e) {
+                    $wr->logApiCall(
+                        'Find/Upsert Matter (FAILED)',
+                        $e->getPendingRequest()->getMethod()->value,
+                        $e->getPendingRequest()->getUrl(),
+                        $matterPayload,
+                        $e->getResponse()->json() ?? ['raw' => $e->getResponse()->body()],
+                        $e->getResponse()->status(),
+                    );
+                    throw $e;
+                }
 
                 $imanageMatter = ImanageMatter::updateOrCreate(
                     [
@@ -337,14 +395,35 @@ class UpdateMatter implements ShouldQueue
 
             if ($existingWorkspace) {
                 // Update existing workspace via iManage API
-                $wsResponse = $imanage->updateWorkspace(
-                    $customerId,
-                    $libraryId,
-                    $existingWorkspace->imanage_workspace_id,
-                    $workspacePayload,
-                );
+                try {
+                    $wsResponse = $imanage->updateWorkspace(
+                        $customerId,
+                        $libraryId,
+                        $existingWorkspace->imanage_workspace_id,
+                        $workspacePayload,
+                    );
 
-                $wsData = data_get($wsResponse, 'data', $wsResponse);
+                    $wsData = data_get($wsResponse, 'data', $wsResponse);
+
+                    $wr->logApiCall(
+                        'Update Workspace',
+                        'PATCH',
+                        "libraries/{$libraryId}/workspaces/{$existingWorkspace->imanage_workspace_id}",
+                        $workspacePayload,
+                        $wsResponse,
+                        200,
+                    );
+                } catch (RequestException $e) {
+                    $wr->logApiCall(
+                        'Update Workspace (FAILED)',
+                        $e->getPendingRequest()->getMethod()->value,
+                        $e->getPendingRequest()->getUrl(),
+                        $workspacePayload,
+                        $e->getResponse()->json() ?? ['raw' => $e->getResponse()->body()],
+                        $e->getResponse()->status(),
+                    );
+                    throw $e;
+                }
 
                 $existingWorkspace->fill(array_filter([
                     'name'             => $wsData['name'] ?? $workspaceName,
@@ -373,8 +452,29 @@ class UpdateMatter implements ShouldQueue
                     $workspacePayload['template'] = $template->imanage_template_id;
                 }
 
-                $wsResponse = $imanage->createWorkspace($customerId, $libraryId, $workspacePayload);
-                $wsData     = data_get($wsResponse, 'data', $wsResponse);
+                try {
+                    $wsResponse = $imanage->createWorkspace($customerId, $libraryId, $workspacePayload);
+                    $wsData     = data_get($wsResponse, 'data', $wsResponse);
+
+                    $wr->logApiCall(
+                        'Create Workspace',
+                        'POST',
+                        "libraries/{$libraryId}/workspaces",
+                        $workspacePayload,
+                        $wsResponse,
+                        200,
+                    );
+                } catch (RequestException $e) {
+                    $wr->logApiCall(
+                        'Create Workspace (FAILED)',
+                        $e->getPendingRequest()->getMethod()->value,
+                        $e->getPendingRequest()->getUrl(),
+                        $workspacePayload,
+                        $e->getResponse()->json() ?? ['raw' => $e->getResponse()->body()],
+                        $e->getResponse()->status(),
+                    );
+                    throw $e;
+                }
 
                 $workspaceAttributes = [
                     'tenant_id'                => $tenant->id,
@@ -432,8 +532,29 @@ class UpdateMatter implements ShouldQueue
                     $replicaPayload['template'] = $replicaTemplate->imanage_template_id;
                 }
 
-                $replicaResponse = $imanage->createWorkspace($customerId, $libraryId, $replicaPayload);
-                $replicaData     = data_get($replicaResponse, 'data', $replicaResponse);
+                try {
+                    $replicaResponse = $imanage->createWorkspace($customerId, $libraryId, $replicaPayload);
+                    $replicaData     = data_get($replicaResponse, 'data', $replicaResponse);
+
+                    $wr->logApiCall(
+                        'Create Replica Workspace',
+                        'POST',
+                        "libraries/{$libraryId}/workspaces",
+                        $replicaPayload,
+                        $replicaResponse,
+                        200,
+                    );
+                } catch (RequestException $e) {
+                    $wr->logApiCall(
+                        'Create Replica Workspace (FAILED)',
+                        $e->getPendingRequest()->getMethod()->value,
+                        $e->getPendingRequest()->getUrl(),
+                        $replicaPayload,
+                        $e->getResponse()->json() ?? ['raw' => $e->getResponse()->body()],
+                        $e->getResponse()->status(),
+                    );
+                    throw $e;
+                }
 
                 $replicaAttributes = [
                     'tenant_id'                => $tenant->id,

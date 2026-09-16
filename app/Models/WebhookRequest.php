@@ -31,6 +31,7 @@ class WebhookRequest extends Model
         'error_count',
         'failed_at_stage',
         'skip_reason',
+        'api_call_log',
         'started_at',
         'completed_at',
         'reattempted',
@@ -54,6 +55,7 @@ class WebhookRequest extends Model
             'security_activity_complete'           => 'boolean',
             'workspace_link_custom_field_populated' => 'boolean',
             'reattempted'                          => 'boolean',
+            'api_call_log'                         => 'array',
         ];
     }
 
@@ -101,6 +103,26 @@ class WebhookRequest extends Model
         $this->skip_reason      = $reason;
         $this->processing_stage = ProcessingStage::Skipped;
         $this->completed_at     = now();
+        $this->save();
+    }
+
+    /**
+     * Append an API call entry to the log.
+     */
+    public function logApiCall(string $step, string $method, string $url, array $requestPayload, mixed $responseBody, int $statusCode): void
+    {
+        $log   = $this->api_call_log ?? [];
+        $log[] = [
+            'step'     => $step,
+            'method'   => $method,
+            'url'      => $url,
+            'request'  => $requestPayload,
+            'response' => is_array($responseBody) ? $responseBody : json_decode((string) $responseBody, true),
+            'status'   => $statusCode,
+            'at'       => now()->toDateTimeString(),
+        ];
+
+        $this->api_call_log = $log;
         $this->save();
     }
 }

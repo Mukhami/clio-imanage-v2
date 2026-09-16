@@ -142,6 +142,48 @@
                 </div>
             @endif
 
+            {{-- API Call Log --}}
+            @if (!empty($webhookRequest->api_call_log))
+                <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                    <div class="border-b border-zinc-200 dark:border-zinc-700 px-6 py-4">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-neutral-400">API Call Log ({{ count($webhookRequest->api_call_log) }} calls)</p>
+                    </div>
+                    <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        @foreach ($webhookRequest->api_call_log as $i => $call)
+                            <div x-data="{ open: false }" class="px-6 py-3">
+                                <button type="button" @click="open = !open" class="flex w-full items-center justify-between text-left">
+                                    <div class="flex items-center gap-3">
+                                        <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium {{ ($call['status'] ?? 0) >= 400 ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' }}">
+                                            {{ $call['status'] ?? '—' }}
+                                        </span>
+                                        <span class="text-sm font-medium text-zinc-900 dark:text-white">{{ $call['step'] ?? 'Unknown' }}</span>
+                                        <span class="text-xs text-zinc-400 font-mono">{{ $call['method'] ?? '' }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-zinc-400">{{ $call['at'] ?? '' }}</span>
+                                        <flux:icon.chevron-down class="size-4 text-zinc-400 transition-transform" :class="{ 'rotate-180': open }" />
+                                    </div>
+                                </button>
+                                <div x-show="open" x-cloak class="mt-3 space-y-3">
+                                    <div>
+                                        <p class="text-xs font-medium text-zinc-500 mb-1">URL</p>
+                                        <p class="text-xs font-mono text-zinc-700 dark:text-zinc-300">{{ $call['url'] ?? '—' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-medium text-zinc-500 mb-1">Request Payload</p>
+                                        <pre class="overflow-x-auto rounded-lg bg-zinc-50 dark:bg-zinc-950 p-3 text-xs text-zinc-700 dark:text-zinc-300">{{ json_encode($call['request'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-medium text-zinc-500 mb-1">Response</p>
+                                        <pre class="overflow-x-auto rounded-lg bg-zinc-50 dark:bg-zinc-950 p-3 text-xs text-zinc-700 dark:text-zinc-300">{{ json_encode($call['response'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             {{-- Raw Payload --}}
             <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
                 <div class="border-b border-zinc-200 dark:border-zinc-700 px-6 py-4">

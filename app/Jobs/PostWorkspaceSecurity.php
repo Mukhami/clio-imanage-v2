@@ -15,6 +15,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use RuntimeException;
+use Saloon\Exceptions\Request\RequestException;
 use Throwable;
 
 class PostWorkspaceSecurity implements ShouldQueue
@@ -112,7 +113,28 @@ class PostWorkspaceSecurity implements ShouldQueue
                     ]);
                 }
 
-                $imanage->applyWorkspaceSecurity($customerId, $libraryId, $targetWorkspaceId, $payload);
+                try {
+                    $imanage->applyWorkspaceSecurity($customerId, $libraryId, $targetWorkspaceId, $payload);
+
+                    $wr->logApiCall(
+                        'Apply Workspace Security (Template)',
+                        'PUT',
+                        "libraries/{$libraryId}/workspaces/{$targetWorkspaceId}/security",
+                        $payload,
+                        [],
+                        200,
+                    );
+                } catch (RequestException $e) {
+                    $wr->logApiCall(
+                        'Apply Workspace Security (FAILED)',
+                        $e->getPendingRequest()->getMethod()->value,
+                        $e->getPendingRequest()->getUrl(),
+                        $payload,
+                        $e->getResponse()->json() ?? ['raw' => $e->getResponse()->body()],
+                        $e->getResponse()->status(),
+                    );
+                    throw $e;
+                }
             }
 
             $wr->security_activity_complete = true;

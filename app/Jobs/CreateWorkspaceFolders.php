@@ -15,6 +15,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use RuntimeException;
+use Saloon\Exceptions\Request\RequestException;
 use Throwable;
 
 class CreateWorkspaceFolders implements ShouldQueue
@@ -173,9 +174,32 @@ class CreateWorkspaceFolders implements ShouldQueue
         }
 
         // Create folder in target workspace
-        $createResponse = $imanage->createFolder($customerId, $libraryId, $targetWorkspaceId, $folderData);
-        $createdFolder  = data_get($createResponse, 'data', []);
-        $newFolderId    = $createdFolder['id'] ?? null;
+        $wr = WebhookRequest::find($this->webhookRequestId);
+
+        try {
+            $createResponse = $imanage->createFolder($customerId, $libraryId, $targetWorkspaceId, $folderData);
+            $createdFolder  = data_get($createResponse, 'data', []);
+            $newFolderId    = $createdFolder['id'] ?? null;
+
+            $wr?->logApiCall(
+                'Create Folder: ' . ($node['name'] ?? 'Folder'),
+                'POST',
+                "libraries/{$libraryId}/workspaces/{$targetWorkspaceId}/folders",
+                $folderData,
+                $createResponse,
+                200,
+            );
+        } catch (RequestException $e) {
+            $wr?->logApiCall(
+                'Create Folder (FAILED): ' . ($node['name'] ?? 'Folder'),
+                $e->getPendingRequest()->getMethod()->value,
+                $e->getPendingRequest()->getUrl(),
+                $folderData,
+                $e->getResponse()->json() ?? ['raw' => $e->getResponse()->body()],
+                $e->getResponse()->status(),
+            );
+            throw $e;
+        }
 
         if ($newFolderId) {
             // Copy security from template folder to new folder
@@ -255,7 +279,30 @@ class CreateWorkspaceFolders implements ShouldQueue
             ]);
         }
 
-        $imanage->applyFolderSecurity($customerId, $libraryId, $targetFolderId, $payload);
+        $wr = WebhookRequest::find($this->webhookRequestId);
+
+        try {
+            $imanage->applyFolderSecurity($customerId, $libraryId, $targetFolderId, $payload);
+
+            $wr?->logApiCall(
+                'Apply Folder Security: ' . $targetFolderId,
+                'PUT',
+                "libraries/{$libraryId}/folders/{$targetFolderId}/security",
+                $payload,
+                [],
+                200,
+            );
+        } catch (RequestException $e) {
+            $wr?->logApiCall(
+                'Apply Folder Security (FAILED): ' . $targetFolderId,
+                $e->getPendingRequest()->getMethod()->value,
+                $e->getPendingRequest()->getUrl(),
+                $payload,
+                $e->getResponse()->json() ?? ['raw' => $e->getResponse()->body()],
+                $e->getResponse()->status(),
+            );
+            throw $e;
+        }
     }
 
     /**
