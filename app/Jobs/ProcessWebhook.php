@@ -47,13 +47,15 @@ class ProcessWebhook implements ShouldQueue
         return [5, 30, 120];
     }
 
-    public function handle(TenantConfigurationService $config): void
+    public function handle(): void
     {
         // 1. Load tenant — silently discard if not found
         $tenant = Tenant::find($this->tenantId);
         if ($tenant === null) {
             return;
         }
+
+        $config = new TenantConfigurationService($tenant);
 
         // 2. Load the Webhook model matching tenant + Clio webhook ID
         $webhook = Webhook::where('tenant_id', $this->tenantId)
