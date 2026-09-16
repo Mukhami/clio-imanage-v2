@@ -293,6 +293,7 @@
                         <option value="{{ $stage->value }}">{{ ucfirst(str_replace('_', ' ', $stage->value)) }}</option>
                     @endforeach
                 </flux:select>
+                <flux:button size="xs" variant="ghost" wire:click="$refresh" icon="arrow-path">Refresh</flux:button>
                 <flux:button size="xs" variant="ghost" href="{{ route('admin.webhook-requests.index') }}" wire:navigate>View All</flux:button>
             </div>
         </div>

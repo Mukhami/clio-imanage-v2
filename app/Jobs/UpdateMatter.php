@@ -51,6 +51,12 @@ class UpdateMatter implements ShouldQueue
         return [15, 60, 300];
     }
 
+    public function failed(Throwable $exception): void
+    {
+        $wr = WebhookRequest::find($this->webhookRequestId);
+        $wr?->markFailed('Job permanently failed: ' . $exception->getMessage());
+    }
+
     public function handle(): void
     {
         // 1. Load required records
@@ -448,10 +454,6 @@ class UpdateMatter implements ShouldQueue
                 $updatedWorkspace = $existingWorkspace;
             } else {
                 // Create workspace via iManage API
-                if ($template?->imanage_template_id) {
-                    $workspacePayload['template'] = $template->imanage_template_id;
-                }
-
                 try {
                     $wsResponse = $imanage->createWorkspace($customerId, $libraryId, $workspacePayload);
                     $wsData     = data_get($wsResponse, 'data', $wsResponse);
@@ -527,10 +529,6 @@ class UpdateMatter implements ShouldQueue
                 $replicaPayload                = $workspacePayload;
                 $replicaPayload['description'] = $workspaceName;
                 $replicaPayload['name']        = $workspaceName;
-
-                if ($replicaTemplate?->imanage_template_id) {
-                    $replicaPayload['template'] = $replicaTemplate->imanage_template_id;
-                }
 
                 try {
                     $replicaResponse = $imanage->createWorkspace($customerId, $libraryId, $replicaPayload);

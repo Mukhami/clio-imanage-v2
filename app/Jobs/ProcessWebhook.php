@@ -47,6 +47,14 @@ class ProcessWebhook implements ShouldQueue
         return [5, 30, 120];
     }
 
+    public function failed(Throwable $exception): void
+    {
+        if ($this->webhookRequestId) {
+            $wr = WebhookRequest::find($this->webhookRequestId);
+            $wr?->markFailed('Webhook processing permanently failed: ' . $exception->getMessage());
+        }
+    }
+
     public function handle(): void
     {
         // 1. Resolve the pre-created WebhookRequest record (if available)

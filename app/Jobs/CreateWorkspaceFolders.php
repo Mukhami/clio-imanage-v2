@@ -37,6 +37,12 @@ class CreateWorkspaceFolders implements ShouldQueue
         return [30, 120, 600];
     }
 
+    public function failed(\Throwable $exception): void
+    {
+        $wr = WebhookRequest::find($this->webhookRequestId);
+        $wr?->markFailed('Folder creation permanently failed: ' . $exception->getMessage());
+    }
+
     public function handle(): void
     {
         $wr     = WebhookRequest::findOrFail($this->webhookRequestId);

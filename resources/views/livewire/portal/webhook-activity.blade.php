@@ -6,6 +6,7 @@
 
     <div class="mb-6 flex items-center justify-between">
         <flux:heading size="xl">Webhook Activity</flux:heading>
+        <flux:button size="sm" variant="ghost" wire:click="$refresh" icon="arrow-path">Refresh</flux:button>
     </div>
 
     <div class="mb-4 flex items-center gap-2 flex-nowrap">

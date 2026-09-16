@@ -38,6 +38,12 @@ class AuditWorkspaceSecurity implements ShouldQueue
         return [60];
     }
 
+    public function failed(Throwable $exception): void
+    {
+        $wr = WebhookRequest::find($this->webhookRequestId);
+        $wr?->markFailed('Security audit permanently failed: ' . $exception->getMessage());
+    }
+
     public function handle(): void
     {
         $wr     = WebhookRequest::findOrFail($this->webhookRequestId);
