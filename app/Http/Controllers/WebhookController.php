@@ -41,13 +41,39 @@ class WebhookController extends Controller
         }
 
         $correlationId = $request->header('X-Correlation-Id') ?? (string) Str::uuid();
-        $payload       = json_decode($request->getContent(), true);
+        $rawPayload    = $request->getContent();
+        $payload       = json_decode($rawPayload, true);
+        $payloadHash   = hash('sha256', $rawPayload);
         $clioWebhookId = data_get($payload, 'meta.webhook_id');
 
         $webhook = Webhook::where('tenant_id', $tenant->id)
             ->where('status', 'active')
             ->when($clioWebhookId, fn ($q) => $q->where('clio_id', $clioWebhookId))
             ->first();
+
+        // Deduplication: skip if an identical payload was received for this tenant within the last 30 seconds
+        $duplicate = WebhookRequest::where('tenant_id', $tenant->id)
+            ->where('payload_hash', $payloadHash)
+            ->where('created_at', '>=', now()->subSeconds(30))
+            ->exists();
+
+        if ($duplicate) {
+            // Still record it for visibility, but mark as skipped immediately
+            WebhookRequest::create([
+                'tenant_id'        => $tenant->id,
+                'webhook_id'       => $webhook?->id,
+                'url'              => $request->fullUrl(),
+                'headers'          => $request->headers->all(),
+                'body'             => $payload,
+                'payload_hash'     => $payloadHash,
+                'correlation_id'   => $correlationId,
+                'processing_stage' => ProcessingStage::Skipped,
+                'skip_reason'      => 'Duplicate payload received within 30 seconds.',
+                'completed_at'     => now(),
+            ]);
+
+            return response('', 200);
+        }
 
         // Record every incoming request immediately — before any further checks
         $webhookRequest = WebhookRequest::create([
@@ -56,6 +82,7 @@ class WebhookController extends Controller
             'url'              => $request->fullUrl(),
             'headers'          => $request->headers->all(),
             'body'             => $payload,
+            'payload_hash'     => $payloadHash,
             'correlation_id'   => $correlationId,
             'processing_stage' => ProcessingStage::Received,
             'started_at'       => now(),
@@ -79,7 +106,7 @@ class WebhookController extends Controller
         ProcessWebhook::dispatch(
             tenantId:         $tenant->id,
             webhookId:        (string) ($webhook?->clio_id ?? ''),
-            rawPayload:       $request->getContent(),
+            rawPayload:       $rawPayload,
             headers:          $request->headers->all(),
             correlationId:    $correlationId,
             webhookRequestId: $webhookRequest->id,
