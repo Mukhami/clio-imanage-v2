@@ -282,6 +282,93 @@
         @endif
     </div>
 
+    {{-- Webhook Requests --}}
+    <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 mb-6">
+        <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
+            <flux:heading size="sm" class="uppercase tracking-wider text-zinc-500">Webhook Requests</flux:heading>
+            <div class="flex items-center gap-3">
+                <flux:select wire:model.live="webhookRequestStageFilter" size="sm" class="w-40">
+                    <option value="">All Stages</option>
+                    @foreach (\App\Enums\ProcessingStage::cases() as $stage)
+                        <option value="{{ $stage->value }}">{{ ucfirst(str_replace('_', ' ', $stage->value)) }}</option>
+                    @endforeach
+                </flux:select>
+                <flux:button size="xs" variant="ghost" href="{{ route('admin.webhook-requests.index') }}" wire:navigate>View All</flux:button>
+            </div>
+        </div>
+        @if ($webhookRequests->isEmpty())
+            <div class="px-6 py-8 text-center">
+                <flux:text class="text-zinc-400">No webhook requests found.</flux:text>
+            </div>
+        @else
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-zinc-100 dark:divide-zinc-800">
+                    <thead>
+                        <tr class="bg-zinc-50 dark:bg-zinc-800/50">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Stage</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Client ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Matter ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Error</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Created</th>
+                            <th class="px-6 py-3"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        @foreach ($webhookRequests as $wr)
+                            @php
+                                $wrStage = $wr->processing_stage->value;
+                                $wrColor = match($wrStage) {
+                                    'completed'       => 'green',
+                                    'failed'          => 'red',
+                                    'skipped'         => 'yellow',
+                                    default           => 'blue',
+                                };
+                            @endphp
+                            <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
+                                <td class="px-6 py-3 text-sm">
+                                    <flux:badge :color="$wrColor" size="sm">{{ $wrStage }}</flux:badge>
+                                    @if ($wr->failed_at_stage)
+                                        <span class="block text-xs text-zinc-400 mt-0.5">during: {{ $wr->failed_at_stage }}</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                                    {{ $wr->webhook?->webhookType?->name ?? '—' }}
+                                </td>
+                                <td class="px-6 py-3 text-sm font-mono text-zinc-600 dark:text-zinc-400">
+                                    {{ $wr->retrieved_client_id ?: '—' }}
+                                </td>
+                                <td class="px-6 py-3 text-sm font-mono text-zinc-600 dark:text-zinc-400">
+                                    {{ $wr->retrieved_matter_id ?: '—' }}
+                                </td>
+                                <td class="px-6 py-3 text-sm max-w-xs">
+                                    @if ($wr->error_message)
+                                        <span class="text-red-600 dark:text-red-400 line-clamp-2 text-xs">{{ $wr->error_message }}</span>
+                                    @elseif ($wrStage === 'skipped' && $wr->skip_reason)
+                                        <span class="text-yellow-600 dark:text-yellow-400 line-clamp-2 text-xs">{{ $wr->skip_reason }}</span>
+                                    @else
+                                        <span class="text-zinc-300">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-3 text-sm text-zinc-500 whitespace-nowrap">
+                                    {{ $wr->created_at->format('d M H:i:s') }}
+                                </td>
+                                <td class="px-6 py-3 text-right">
+                                    <flux:button size="xs" variant="ghost" href="{{ route('admin.webhook-requests.show', $wr->id) }}" wire:navigate>
+                                        View
+                                    </flux:button>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-6 py-3 border-t border-zinc-100 dark:border-zinc-800">
+                {{ $webhookRequests->links() }}
+            </div>
+        @endif
+    </div>
+
     {{-- Force Sync --}}
     <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 mb-6">
         <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">

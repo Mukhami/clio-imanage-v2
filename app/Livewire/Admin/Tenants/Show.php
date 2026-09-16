@@ -10,6 +10,7 @@ use App\Jobs\SyncImanageLibraries;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Webhook;
+use App\Models\WebhookRequest;
 use App\Models\WebhookType;
 use App\Notifications\UserInvited;
 use App\Services\ClioApiService;
@@ -23,10 +24,15 @@ use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Show extends Component
 {
+    use WithPagination;
+
     public Tenant $tenant;
+
+    public string $webhookRequestStageFilter = '';
 
     // -------------------------------------------------------------------------
     // Invite modal state
@@ -282,10 +288,22 @@ class Show extends Component
         Flux::toast(text: "{$user->name} has been invited to the portal.", variant: 'success');
     }
 
+    public function updatedWebhookRequestStageFilter(): void
+    {
+        $this->resetPage('webhookRequestsPage');
+    }
+
     public function render(): View
     {
+        $webhookRequests = WebhookRequest::where('tenant_id', $this->tenant->id)
+            ->with('webhook.webhookType')
+            ->when($this->webhookRequestStageFilter, fn ($q) => $q->where('processing_stage', $this->webhookRequestStageFilter))
+            ->latest()
+            ->paginate(10, pageName: 'webhookRequestsPage');
+
         return view('livewire.admin.tenants.show', [
-            'tenantUsers' => $this->tenantUsers,
+            'tenantUsers'     => $this->tenantUsers,
+            'webhookRequests' => $webhookRequests,
         ]);
     }
 }
