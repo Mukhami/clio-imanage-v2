@@ -27,6 +27,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Throwable;
 
@@ -315,6 +316,8 @@ class UpdateMatter implements ShouldQueue
             if (! empty($additionalCustomFields)) {
                 $workspacePayload = array_merge($workspacePayload, $additionalCustomFields);
             }
+
+            Log::info('Workspace payload for webhook request #' . $wr->id, $workspacePayload);
 
             // 18. Find existing workspace in DB
             $workspaceQuery = ImanageWorkspace::where('tenant_id', $tenant->id)
