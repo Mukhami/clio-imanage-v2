@@ -17,7 +17,7 @@ class Show extends Component
 
     public function mount(int $id): void
     {
-        $this->webhookRequest = WebhookRequest::with('tenant')->findOrFail($id);
+        $this->webhookRequest = WebhookRequest::with(['tenant', 'webhook.webhookType'])->findOrFail($id);
     }
 
     public function reattempt(): void

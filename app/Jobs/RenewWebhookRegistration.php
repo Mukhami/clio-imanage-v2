@@ -36,7 +36,11 @@ class RenewWebhookRegistration implements ShouldQueue
 
         try {
             $clio     = new ClioApiService($tenant);
-            $response = $clio->renewWebhook((int) $webhook->clio_id);
+            $response = $clio->renewWebhook((int) $webhook->clio_id, [
+                'data' => [
+                    'expires_at' => now()->addDays(29)->format('Y-m-d\TH:i:sP'),
+                ],
+            ]);
 
             $newExpiresAt = data_get($response, 'data.expires_at');
 

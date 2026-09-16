@@ -29,6 +29,8 @@ class WebhookRequest extends Model
         'workspace_link_custom_field_populated',
         'error_message',
         'error_count',
+        'failed_at_stage',
+        'skip_reason',
         'started_at',
         'completed_at',
         'reattempted',
@@ -87,8 +89,17 @@ class WebhookRequest extends Model
     public function markFailed(string $message): void
     {
         $this->error_count++;
+        $this->failed_at_stage  = $this->processing_stage?->value ?? 'unknown';
         $this->error_message    = $message;
         $this->processing_stage = ProcessingStage::Failed;
+        $this->completed_at     = now();
+        $this->save();
+    }
+
+    public function markSkipped(string $reason): void
+    {
+        $this->skip_reason      = $reason;
+        $this->processing_stage = ProcessingStage::Skipped;
         $this->completed_at     = now();
         $this->save();
     }

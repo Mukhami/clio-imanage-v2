@@ -105,15 +105,30 @@ class UpdateMatter implements ShouldQueue
                 ->map(fn ($f) => $f['value'])
                 ->toArray();
 
-            // 6 & 7. Validate tenant settings and library
+            // 6. Guard: ensure parsed IDs are present
+            if (empty($wr->retrieved_client_id)) {
+                throw new RuntimeException(
+                    "Cannot process webhook request #{$wr->id}: Client ID is empty. "
+                    . "Display number \"{$displayNumber}\" was not parsed correctly. "
+                    . 'Check the Display Number Parsing Config for this tenant.'
+                );
+            }
+
+            // 7. Validate tenant settings and library
             $setting = $tenant->tenantSetting;
             if (! $setting) {
-                throw new RuntimeException("No TenantSetting found for tenant ID: {$tenant->id}");
+                throw new RuntimeException(
+                    "No Tenant Settings found for tenant \"{$tenant->name}\" (ID: {$tenant->id}). "
+                    . 'Configure Tenant Settings with a linked iManage Library before processing webhooks.'
+                );
             }
 
             $library = $setting->library;
             if (! $library) {
-                throw new RuntimeException("No Library linked to TenantSetting for tenant ID: {$tenant->id}");
+                throw new RuntimeException(
+                    "No iManage Library linked in Tenant Settings for tenant \"{$tenant->name}\" (ID: {$tenant->id}). "
+                    . 'Select a Library in the Tenant Settings configuration.'
+                );
             }
 
             $libraryId  = $library->imanage_library_id;

@@ -40,10 +40,21 @@
                     <dd class="col-span-2 text-sm text-zinc-900 dark:text-white">{{ $webhookRequest->tenant?->name ?? '—' }}</dd>
                 </div>
                 <div class="grid grid-cols-3 gap-4 px-6 py-3">
+                    <dt class="text-sm font-medium text-zinc-500">Webhook Type</dt>
+                    <dd class="col-span-2 text-sm text-zinc-900 dark:text-white">{{ $webhookRequest->webhook?->webhookType?->name ?? '—' }}</dd>
+                </div>
+                <div class="grid grid-cols-3 gap-4 px-6 py-3">
                     <dt class="text-sm font-medium text-zinc-500">Stage</dt>
                     <dd class="col-span-2 text-sm text-zinc-900 dark:text-white">
                         <flux:badge :color="$stageColor" size="sm">{{ $stage }}</flux:badge>
+                        @if ($webhookRequest->failed_at_stage)
+                            <span class="ml-2 text-xs text-zinc-500">(failed during: {{ $webhookRequest->failed_at_stage }})</span>
+                        @endif
                     </dd>
+                </div>
+                <div class="grid grid-cols-3 gap-4 px-6 py-3">
+                    <dt class="text-sm font-medium text-zinc-500">Started At</dt>
+                    <dd class="col-span-2 text-sm text-zinc-900 dark:text-white">{{ $webhookRequest->started_at?->format('d M Y H:i:s') ?? '—' }}</dd>
                 </div>
                 <div class="grid grid-cols-3 gap-4 px-6 py-3">
                     <dt class="text-sm font-medium text-zinc-500">Created At</dt>
@@ -88,14 +99,31 @@
     </div>
 
     {{-- Error Section --}}
-    @if ($stage === 'failed' && $webhookRequest->error_message)
-        <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 mb-6">
-            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
-                <flux:heading size="sm" class="uppercase tracking-wider text-red-500">Error</flux:heading>
+    @if ($webhookRequest->error_message)
+        <div class="overflow-hidden rounded-xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950 mb-6">
+            <div class="px-6 py-4 border-b border-red-200 dark:border-red-800">
+                <flux:heading size="sm" class="uppercase tracking-wider text-red-600 dark:text-red-400">Error</flux:heading>
             </div>
             <div class="p-6">
-                <flux:text class="text-red-600 dark:text-red-400">{{ $webhookRequest->error_message }}</flux:text>
-                <flux:text class="mt-1 text-xs text-zinc-400">Error count: {{ $webhookRequest->error_count }}</flux:text>
+                <p class="text-sm text-red-700 dark:text-red-300 whitespace-pre-wrap">{{ $webhookRequest->error_message }}</p>
+                <div class="mt-3 flex items-center gap-4 text-xs text-red-500 dark:text-red-400">
+                    @if ($webhookRequest->failed_at_stage)
+                        <span>Failed during: <strong>{{ $webhookRequest->failed_at_stage }}</strong></span>
+                    @endif
+                    <span>Attempts: {{ $webhookRequest->error_count }}</span>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Skip Reason --}}
+    @if ($stage === 'skipped' && $webhookRequest->skip_reason)
+        <div class="overflow-hidden rounded-xl border border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-950 mb-6">
+            <div class="px-6 py-4 border-b border-yellow-200 dark:border-yellow-800">
+                <flux:heading size="sm" class="uppercase tracking-wider text-yellow-600 dark:text-yellow-400">Skipped</flux:heading>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-yellow-700 dark:text-yellow-300">{{ $webhookRequest->skip_reason }}</p>
             </div>
         </div>
     @endif

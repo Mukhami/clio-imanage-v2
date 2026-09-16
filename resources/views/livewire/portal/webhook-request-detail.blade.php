@@ -35,7 +35,12 @@
                 <dl class="divide-y divide-zinc-100 dark:divide-zinc-800">
                     <div class="px-6 py-3">
                         <dt class="text-xs text-neutral-500">Stage</dt>
-                        <dd class="mt-0.5"><flux:badge :color="$stageColor" size="sm">{{ $stage }}</flux:badge></dd>
+                        <dd class="mt-0.5">
+                            <flux:badge :color="$stageColor" size="sm">{{ $stage }}</flux:badge>
+                            @if ($webhookRequest->failed_at_stage)
+                                <span class="ml-1 text-xs text-neutral-500">(during: {{ $webhookRequest->failed_at_stage }})</span>
+                            @endif
+                        </dd>
                     </div>
                     <div class="px-6 py-3">
                         <dt class="text-xs text-neutral-500">Received</dt>
@@ -112,12 +117,27 @@
 
             {{-- Error Message --}}
             @if ($webhookRequest->error_message)
-                <div class="rounded-xl border border-ml-error/30 bg-ml-error-soft dark:bg-zinc-900 dark:border-ml-error/30">
-                    <div class="border-b border-ml-error/30 px-6 py-4">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-ml-error">Error</p>
+                <div class="rounded-xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950">
+                    <div class="border-b border-red-200 dark:border-red-800 px-6 py-4">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-red-600 dark:text-red-400">Error</p>
                     </div>
                     <div class="px-6 py-4">
-                        <p class="text-sm text-ml-error">{{ $webhookRequest->error_message }}</p>
+                        <p class="text-sm text-red-700 dark:text-red-300 whitespace-pre-wrap">{{ $webhookRequest->error_message }}</p>
+                        @if ($webhookRequest->failed_at_stage)
+                            <p class="mt-2 text-xs text-red-500">Failed during: <strong>{{ $webhookRequest->failed_at_stage }}</strong></p>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
+            {{-- Skip Reason --}}
+            @if ($stage === 'skipped' && $webhookRequest->skip_reason)
+                <div class="rounded-xl border border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-950">
+                    <div class="border-b border-yellow-200 dark:border-yellow-800 px-6 py-4">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-yellow-600 dark:text-yellow-400">Skipped</p>
+                    </div>
+                    <div class="px-6 py-4">
+                        <p class="text-sm text-yellow-700 dark:text-yellow-300">{{ $webhookRequest->skip_reason }}</p>
                     </div>
                 </div>
             @endif

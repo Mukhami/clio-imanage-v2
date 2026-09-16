@@ -49,32 +49,32 @@ class ProcessWebhook implements ShouldQueue
 
     public function handle(): void
     {
-        // 1. Load tenant — silently discard if not found
+        // 1. Resolve the pre-created WebhookRequest record (if available)
+        $webhookRequest = $this->webhookRequestId
+            ? WebhookRequest::find($this->webhookRequestId)
+            : null;
+
+        // 2. Load tenant — mark failed if not found
         $tenant = Tenant::find($this->tenantId);
         if ($tenant === null) {
+            $webhookRequest?->markFailed("Tenant ID {$this->tenantId} not found. The tenant may have been deleted.");
+
             return;
         }
 
         $config = new TenantConfigurationService($tenant);
 
-        // 2. Load the Webhook model matching tenant + Clio webhook ID
+        // 3. Load the Webhook model matching tenant + Clio webhook ID
         $webhook = Webhook::where('tenant_id', $this->tenantId)
             ->when($this->webhookId !== '', fn ($q) => $q->where('clio_id', $this->webhookId))
             ->first();
 
-        // Initialise $webhookRequest outside try so the catch block can reference it
-        $webhookRequest = null;
-
         try {
-            // 3. Use the pre-created WebhookRequest record from the controller, or create one as fallback
-            $webhookRequest = $this->webhookRequestId
-                ? WebhookRequest::find($this->webhookRequestId)
-                : null;
-
+            // 4. Create a fallback WebhookRequest if the controller didn't pre-create one
             if (! $webhookRequest) {
                 $webhookRequest = WebhookRequest::create([
                     'tenant_id'        => $this->tenantId,
-                    'webhook_id'       => $webhook->id,
+                    'webhook_id'       => $webhook?->id,
                     'url'              => '',
                     'headers'          => $this->headers,
                     'body'             => json_decode($this->rawPayload, true),
@@ -84,17 +84,22 @@ class ProcessWebhook implements ShouldQueue
                 ]);
             }
 
-            // 4. Advance to Validated
+            // 5. Advance to Validated
             $webhookRequest->processing_stage = ProcessingStage::Validated;
             $webhookRequest->save();
 
-            // 5. Decode payload
+            // 6. Decode payload
             $data     = json_decode($this->rawPayload, true);
             $matterId = data_get($data, 'data.id');
 
-            // 6. If the webhook payload is thin (missing client or practice_area),
-            //    fetch the full matter from Clio. This covers old webhooks registered
-            //    without fields config and any edge cases where Clio omits fields.
+            if (! is_array($data) || ! isset($data['data'])) {
+                $webhookRequest->markFailed('Invalid or malformed webhook payload: could not decode JSON body.');
+
+                return;
+            }
+
+            // 7. If the webhook payload is thin (missing client or practice_area),
+            //    fetch the full matter from Clio.
             $hasFullData = data_get($data, 'data.client') && data_get($data, 'data.practice_area');
 
             if ($matterId && ! $hasFullData) {
@@ -106,42 +111,59 @@ class ProcessWebhook implements ShouldQueue
                 $webhookRequest->save();
             }
 
-            // 7. Advance to Parsed
+            // 8. Advance to Parsed
             $webhookRequest->processing_stage = ProcessingStage::Parsed;
             $webhookRequest->save();
 
-            // 7. Evaluate processing filters via TenantConfigurationService
+            // 9. Evaluate processing filters via TenantConfigurationService
             $filterResult = $config->shouldProcess($data);
 
             if ($filterResult->shouldSkip()) {
-                $webhookRequest->processing_stage = ProcessingStage::Skipped;
-                $webhookRequest->save();
+                $webhookRequest->markSkipped($filterResult->reason ?? 'Matched a processing filter.');
 
                 return;
             }
 
-            // 8. Advance to Filtered
+            // 10. Advance to Filtered
             $webhookRequest->processing_stage = ProcessingStage::Filtered;
             $webhookRequest->save();
 
-            // 9. Parse display number from payload
+            // 11. Parse display number from payload
             $displayNumber = $data['data']['display_number'] ?? $data['data']['number'] ?? null;
 
-            // 10. Resolve client/matter IDs from the display number
+            // 12. Resolve client/matter IDs from the display number
             $parsedIds = $config->resolveDisplayNumber((string) ($displayNumber ?? ''), $data);
 
-            // 11. Store retrieved IDs on the WebhookRequest
+            if (! $parsedIds->isValid) {
+                $errorDetail = implode('; ', $parsedIds->errors);
+                $webhookRequest->markFailed(
+                    "Display number parsing failed for \"{$displayNumber}\": {$errorDetail}. "
+                    . 'Check the Display Number Parsing Config for this tenant.'
+                );
+
+                return;
+            }
+
+            if ($parsedIds->clientId === '') {
+                $webhookRequest->markFailed(
+                    "Display number parsing produced an empty Client ID from \"{$displayNumber}\". "
+                    . 'Check the Display Number Parsing Config (client_position, delimiter).'
+                );
+
+                return;
+            }
+
+            // 13. Store retrieved IDs on the WebhookRequest
             $webhookRequest->retrieved_client_id = $parsedIds->clientId;
             $webhookRequest->retrieved_matter_id = $parsedIds->matterId;
             $webhookRequest->save();
 
-            // 12. Advance to Enqueued
+            // 14. Advance to Enqueued
             $webhookRequest->processing_stage = ProcessingStage::Enqueued;
             $webhookRequest->save();
 
-            // 13. Hand off to UpdateMatter on the imanage queue
-            UpdateMatter::dispatch($webhookRequest->id, $this->tenantId)
-                ;
+            // 15. Hand off to UpdateMatter
+            UpdateMatter::dispatch($webhookRequest->id, $this->tenantId);
 
         } catch (Throwable $e) {
             if ($webhookRequest !== null) {
