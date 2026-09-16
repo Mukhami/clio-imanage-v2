@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Integrations\Imanage\Requests;
 
+use Saloon\Contracts\Body\HasBody;
 use Saloon\Enums\Method;
 use Saloon\Http\Request;
 use Saloon\Traits\Body\HasJsonBody;
 
-class CreateWorkspace extends Request
+class CreateWorkspace extends Request implements HasBody
 {
     use HasJsonBody;
 

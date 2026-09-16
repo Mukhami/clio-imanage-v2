@@ -80,7 +80,10 @@
     <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 mb-6">
         <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
             <flux:heading size="sm" class="uppercase tracking-wider text-zinc-500">Practice Area Mappings</flux:heading>
-            <flux:button size="sm" x-on:click="$flux.modal('add-pa-mapping').show()">Add Mapping</flux:button>
+            <div class="flex gap-2">
+                <flux:button size="sm" variant="ghost" x-on:click="$flux.modal('bulk-pa-mapping').show()">Map All to One</flux:button>
+                <flux:button size="sm" x-on:click="$flux.modal('add-pa-mapping').show()">Add Mapping</flux:button>
+            </div>
         </div>
 
         <div class="px-4">
@@ -314,6 +317,55 @@
                 <flux:button variant="ghost">Cancel</flux:button>
             </flux:modal.close>
             <flux:button variant="primary" wire:click="addPracticeAreaMapping">Add Mapping</flux:button>
+        </div>
+    </flux:modal>
+
+    {{-- Bulk Practice Area Mapping --}}
+    <flux:modal name="bulk-pa-mapping" class="w-full max-w-lg">
+        <flux:heading size="lg">Map All Clio Practice Areas to One</flux:heading>
+        <flux:subheading>All unmapped Clio practice areas will be mapped to the iManage practice area you select below.</flux:subheading>
+
+        <div class="mt-6 space-y-4">
+            <flux:field>
+                <flux:label>iManage Practice Area</flux:label>
+                <flux:select wire:model.live="bulkImanagePracticeAreaId" placeholder="Select...">
+                    <option value="">Choose...</option>
+                    @foreach ($this->imanagePracticeAreas as $pa)
+                        <option value="{{ $pa->id }}">{{ $pa->description }} ({{ $pa->key }})</option>
+                    @endforeach
+                </flux:select>
+                <flux:error name="bulkImanagePracticeAreaId" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Sub-Practice Area <flux:badge size="sm">Optional</flux:badge></flux:label>
+                <flux:select wire:model="bulkImanageSubPracticeAreaId" placeholder="Select...">
+                    <option value="">None</option>
+                    @foreach ($this->bulkSubPracticeAreas as $sub)
+                        <option value="{{ $sub->id }}">{{ $sub->description }} ({{ $sub->key }})</option>
+                    @endforeach
+                </flux:select>
+                <flux:description>Populated after selecting an iManage practice area above.</flux:description>
+                <flux:error name="bulkImanageSubPracticeAreaId" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Custom Field Config <flux:badge size="sm">Optional</flux:badge></flux:label>
+                <flux:select wire:model="bulkCustomFieldConfigId" placeholder="Select...">
+                    <option value="">None</option>
+                    @foreach ($this->customFieldConfigs as $cfg)
+                        <option value="{{ $cfg->id }}">{{ $cfg->custom_field_identifier }}{{ $cfg->description ? ' — ' . $cfg->description : '' }}</option>
+                    @endforeach
+                </flux:select>
+                <flux:error name="bulkCustomFieldConfigId" />
+            </flux:field>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-2">
+            <flux:modal.close>
+                <flux:button variant="ghost">Cancel</flux:button>
+            </flux:modal.close>
+            <flux:button variant="primary" wire:click="bulkMapPracticeAreas">Map All Unmapped</flux:button>
         </div>
     </flux:modal>
 

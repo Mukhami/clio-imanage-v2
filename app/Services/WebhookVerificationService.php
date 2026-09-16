@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class WebhookVerificationService
 {
@@ -40,11 +41,22 @@ class WebhookVerificationService
     public function verifyRequest(Request $request, string $sharedSecret): bool
     {
         $signature = $request->header('X-Hook-Signature');
+        $rawBody   = $request->getContent();
+        $computed  = hash_hmac('sha256', $rawBody, $sharedSecret);
+
+        Log::debug('Webhook HMAC verification', [
+            'received_signature' => $signature,
+            'computed_signature' => $computed,
+            'secret_length'      => strlen($sharedSecret),
+            'body_length'        => strlen($rawBody),
+            'body_preview'       => substr($rawBody, 0, 100),
+            'match'              => $signature === $computed,
+        ]);
 
         if (! $signature) {
             return false;
         }
 
-        return $this->verifySignature($request->getContent(), $signature, $sharedSecret);
+        return hash_equals($computed, $signature);
     }
 }

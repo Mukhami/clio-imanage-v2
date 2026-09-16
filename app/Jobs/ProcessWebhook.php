@@ -8,6 +8,7 @@ use App\Enums\ProcessingStage;
 use App\Models\Tenant;
 use App\Models\Webhook;
 use App\Models\WebhookRequest;
+use App\Services\ClioApiService;
 use App\Services\TenantConfigurationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,6 +38,7 @@ class ProcessWebhook implements ShouldQueue
         public readonly string $rawPayload,
         public readonly array $headers,
         public readonly string $correlationId,
+        public readonly ?int $webhookRequestId = null,
     ) {
     }
 
@@ -66,31 +68,51 @@ class ProcessWebhook implements ShouldQueue
         $webhookRequest = null;
 
         try {
-            // 3. Create the WebhookRequest record at stage Received
-            $webhookRequest = WebhookRequest::create([
-                'tenant_id'        => $this->tenantId,
-                'webhook_id'       => $webhook->id,
-                'url'              => '',
-                'headers'          => $this->headers,
-                'body'             => json_decode($this->rawPayload, true),
-                'correlation_id'   => $this->correlationId,
-                'processing_stage' => ProcessingStage::Received,
-                'started_at'       => now(),
-            ]);
+            // 3. Use the pre-created WebhookRequest record from the controller, or create one as fallback
+            $webhookRequest = $this->webhookRequestId
+                ? WebhookRequest::find($this->webhookRequestId)
+                : null;
+
+            if (! $webhookRequest) {
+                $webhookRequest = WebhookRequest::create([
+                    'tenant_id'        => $this->tenantId,
+                    'webhook_id'       => $webhook->id,
+                    'url'              => '',
+                    'headers'          => $this->headers,
+                    'body'             => json_decode($this->rawPayload, true),
+                    'correlation_id'   => $this->correlationId,
+                    'processing_stage' => ProcessingStage::Received,
+                    'started_at'       => now(),
+                ]);
+            }
 
             // 4. Advance to Validated
             $webhookRequest->processing_stage = ProcessingStage::Validated;
             $webhookRequest->save();
 
             // 5. Decode payload
-            $data = json_decode($this->rawPayload, true);
+            $data     = json_decode($this->rawPayload, true);
+            $matterId = data_get($data, 'data.id');
 
-            // 6. Advance to Parsed
+            // 6. If the webhook payload is thin (missing client or practice_area),
+            //    fetch the full matter from Clio. This covers old webhooks registered
+            //    without fields config and any edge cases where Clio omits fields.
+            $hasFullData = data_get($data, 'data.client') && data_get($data, 'data.practice_area');
+
+            if ($matterId && ! $hasFullData) {
+                $clio         = new ClioApiService($tenant);
+                $fullMatter   = $clio->getMatter((int) $matterId);
+                $data['data'] = array_merge($data['data'], $fullMatter['data'] ?? []);
+
+                $webhookRequest->body = $data;
+                $webhookRequest->save();
+            }
+
+            // 7. Advance to Parsed
             $webhookRequest->processing_stage = ProcessingStage::Parsed;
             $webhookRequest->save();
 
             // 7. Evaluate processing filters via TenantConfigurationService
-            //    shouldProcess() receives the decoded payload and checks enabled filters
             $filterResult = $config->shouldProcess($data);
 
             if ($filterResult->shouldSkip()) {

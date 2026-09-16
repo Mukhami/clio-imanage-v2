@@ -52,6 +52,14 @@ class Config extends Component
     public string $paCustomFieldConfigId     = '';
 
     // -------------------------------------------------------------------------
+    // Bulk Practice Area Mapping form
+    // -------------------------------------------------------------------------
+
+    public string $bulkImanagePracticeAreaId    = '';
+    public string $bulkImanageSubPracticeAreaId = '';
+    public string $bulkCustomFieldConfigId      = '';
+
+    // -------------------------------------------------------------------------
     // Template Mapping form
     // -------------------------------------------------------------------------
 
@@ -165,6 +173,45 @@ class Config extends Component
     public function deletePracticeAreaMapping(int $id): void
     {
         PracticeAreaMapping::where('tenant_id', $this->tenant->id)->findOrFail($id)->delete();
+    }
+
+    public function bulkMapPracticeAreas(): void
+    {
+        $this->validate([
+            'bulkImanagePracticeAreaId'    => 'required|exists:imanage_practice_areas,id',
+            'bulkImanageSubPracticeAreaId' => 'nullable|exists:imanage_sub_practice_areas,id',
+            'bulkCustomFieldConfigId'      => 'nullable|exists:imanage_custom_field_configs,id',
+        ]);
+
+        $alreadyMapped = PracticeAreaMapping::where('tenant_id', $this->tenant->id)
+            ->pluck('clio_practice_area_id')
+            ->all();
+
+        $unmapped = ClioPracticeArea::where('tenant_id', $this->tenant->id)
+            ->whereNotIn('id', $alreadyMapped)
+            ->get();
+
+        if ($unmapped->isEmpty()) {
+            Flux::toast(text: 'All Clio Practice Areas are already mapped.', variant: 'warning');
+            return;
+        }
+
+        foreach ($unmapped as $clioPa) {
+            PracticeAreaMapping::create([
+                'tenant_id'                      => $this->tenant->id,
+                'clio_practice_area_id'          => $clioPa->id,
+                'imanage_practice_area_id'       => $this->bulkImanagePracticeAreaId,
+                'imanage_sub_practice_area_id'   => $this->bulkImanageSubPracticeAreaId ?: null,
+                'imanage_custom_field_config_id' => $this->bulkCustomFieldConfigId ?: null,
+            ]);
+        }
+
+        $this->bulkImanagePracticeAreaId    = '';
+        $this->bulkImanageSubPracticeAreaId = '';
+        $this->bulkCustomFieldConfigId      = '';
+
+        $this->dispatch('close-modal', name: 'bulk-pa-mapping');
+        Flux::toast(text: "{$unmapped->count()} Clio Practice Area(s) mapped successfully.", variant: 'success');
     }
 
     private function resetPaMappingForm(): void
@@ -323,6 +370,18 @@ class Config extends Component
         }
 
         return ImanageSubPracticeArea::where('imanage_practice_area_id', $this->paImanagePracticeAreaId)
+            ->orderBy('description')
+            ->get();
+    }
+
+    #[Computed]
+    public function bulkSubPracticeAreas(): Collection
+    {
+        if (! $this->bulkImanagePracticeAreaId) {
+            return collect();
+        }
+
+        return ImanageSubPracticeArea::where('imanage_practice_area_id', $this->bulkImanagePracticeAreaId)
             ->orderBy('description')
             ->get();
     }

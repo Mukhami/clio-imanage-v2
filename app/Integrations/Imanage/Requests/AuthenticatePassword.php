@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Integrations\Imanage\Requests;
 
+use Saloon\Contracts\Authenticator;
+use Saloon\Contracts\Body\HasBody;
 use Saloon\Enums\Method;
 use Saloon\Http\Request;
 use Saloon\Traits\Body\HasJsonBody;
-use Saloon\Contracts\Authenticator;
 
-class AuthenticatePassword extends Request
+class AuthenticatePassword extends Request implements HasBody
 {
     use HasJsonBody;
 

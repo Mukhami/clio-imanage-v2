@@ -17,4 +17,26 @@ class GetMatter extends Request
     {
         return "/matters/{$this->id}.json";
     }
+
+    protected function defaultQuery(): array
+    {
+        return [
+            'fields' => implode(',', [
+                'id',
+                'display_number',
+                'description',
+                'status',
+                'open_date',
+                'close_date',
+                'practice_area',
+                'client',
+                'responsible_attorney',
+                'originating_attorney',
+                'custom_field_values',
+                'matter_stage',
+                'group',
+                'location',
+            ]),
+        ];
+    }
 }

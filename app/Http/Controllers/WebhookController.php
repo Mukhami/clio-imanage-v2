@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProcessingStage;
 use App\Jobs\ProcessWebhook;
 use App\Models\Tenant;
 use App\Models\Webhook;
+use App\Models\WebhookRequest;
 use App\Services\WebhookVerificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -35,38 +37,52 @@ class WebhookController extends Controller
         $tenant = Tenant::where('reference', $reference)->first();
 
         if (! $tenant) {
-            // Return 200 to prevent Clio from retrying; tenant simply not found
             return response('', 200);
         }
 
-        // Enforce active subscription gate
-        $activeSubscription = $tenant->tenantSubscriptions()
-            ->where('status', 'active')
-            ->exists();
+        $correlationId = $request->header('X-Correlation-Id') ?? (string) Str::uuid();
+        $payload       = json_decode($request->getContent(), true);
+        $clioWebhookId = data_get($payload, 'meta.webhook_id');
 
-        if (! $activeSubscription) {
-            return response('', 200);
-        }
-
-        // Find the webhook registration to get shared_secret for verification
         $webhook = Webhook::where('tenant_id', $tenant->id)
             ->where('status', 'active')
+            ->when($clioWebhookId, fn ($q) => $q->where('clio_id', $clioWebhookId))
             ->first();
 
-        // Verify HMAC signature if a webhook with a shared secret exists
+        // Record every incoming request immediately — before any further checks
+        $webhookRequest = WebhookRequest::create([
+            'tenant_id'        => $tenant->id,
+            'webhook_id'       => $webhook?->id,
+            'url'              => $request->fullUrl(),
+            'headers'          => $request->headers->all(),
+            'body'             => $payload,
+            'correlation_id'   => $correlationId,
+            'processing_stage' => ProcessingStage::Received,
+            'started_at'       => now(),
+        ]);
+
+        // Enforce active subscription gate
+        if (! $tenant->tenantSubscriptions()->where('status', 'active')->exists()) {
+            $webhookRequest->markFailed('Tenant does not have an active subscription.');
+            return response('', 200);
+        }
+
+        // Verify HMAC signature against the matched webhook's shared secret
         if ($webhook && $webhook->shared_secret) {
             if (! $this->verification->verifyRequest($request, $webhook->shared_secret)) {
+                $webhookRequest->markFailed('HMAC signature verification failed.');
                 return response('', 200);
             }
         }
 
-        // Dispatch asynchronously — return 200 immediately
+        // Dispatch asynchronously — pass the already-created record ID
         ProcessWebhook::dispatch(
-            tenantId: $tenant->id,
-            webhookId: (string) ($webhook?->clio_id ?? ''),
-            rawPayload: $request->getContent(),
-            headers: $request->headers->all(),
-            correlationId: $request->header('X-Correlation-Id') ?? (string) Str::uuid(),
+            tenantId:         $tenant->id,
+            webhookId:        (string) ($webhook?->clio_id ?? ''),
+            rawPayload:       $request->getContent(),
+            headers:          $request->headers->all(),
+            correlationId:    $correlationId,
+            webhookRequestId: $webhookRequest->id,
         )->onQueue('webhooks');
 
         return response('', 200);

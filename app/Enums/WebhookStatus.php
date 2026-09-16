@@ -7,6 +7,7 @@ namespace App\Enums;
 enum WebhookStatus: string
 {
     case Active  = 'active';
+    case Pending = 'pending';
     case Expired = 'expired';
     case Failed  = 'failed';
 }

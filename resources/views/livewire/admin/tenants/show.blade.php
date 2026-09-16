@@ -221,16 +221,24 @@
                             $webhook = $this->tenantWebhooks->firstWhere('webhook_type_id', $type->id);
                             $statusColor = match($webhook?->status?->value ?? '') {
                                 'active'  => 'green',
-                                'expired' => 'yellow',
+                                'pending' => 'yellow',
+                                'expired' => 'orange',
                                 'failed'  => 'red',
                                 default   => 'zinc',
+                            };
+                            $statusLabel = match($webhook?->status?->value ?? '') {
+                                'active'  => 'enabled',
+                                'pending' => 'pending',
+                                'expired' => 'expired',
+                                'failed'  => 'disabled',
+                                default   => 'unknown',
                             };
                         @endphp
                         <tr>
                             <td class="px-6 py-3 text-sm text-zinc-900 dark:text-white">{{ $type->name }}</td>
                             <td class="px-6 py-3 text-sm">
                                 @if ($webhook)
-                                    <flux:badge :color="$statusColor" size="sm">{{ $webhook->status->value }}</flux:badge>
+                                    <flux:badge :color="$statusColor" size="sm">{{ $statusLabel }}</flux:badge>
                                 @else
                                     <span class="text-zinc-400 text-xs">Not registered</span>
                                 @endif
@@ -241,8 +249,15 @@
                             <td class="px-6 py-3 text-sm font-mono text-zinc-500">
                                 {{ $webhook?->clio_id ?? '—' }}
                             </td>
-                            <td class="px-6 py-3 text-right">
+                            <td class="px-6 py-3 text-right space-x-2">
                                 @if ($webhook)
+                                    <flux:button
+                                        size="xs"
+                                        variant="ghost"
+                                        wire:click="checkWebhookStatus({{ $webhook->id }})"
+                                    >
+                                        Check Status
+                                    </flux:button>
                                     <flux:button
                                         size="xs"
                                         variant="ghost"

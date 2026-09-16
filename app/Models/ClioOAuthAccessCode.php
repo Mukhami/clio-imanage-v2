@@ -11,6 +11,15 @@ class ClioOAuthAccessCode extends Model
 
     public $timestamps = false;
 
+    public static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->created_at = $model->freshTimestamp();
+        });
+    }
+
     protected $fillable = ['tenant_id', 'code', 'redirect_uri', 'expires_at'];
 
     protected function casts(): array
