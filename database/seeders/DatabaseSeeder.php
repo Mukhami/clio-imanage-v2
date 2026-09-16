@@ -13,7 +13,11 @@ class DatabaseSeeder extends Seeder
             ClioLocationsSeeder::class,
             UsersSeeder::class,
             WebhookTypesSeeder::class,
-            TenantSeeder::class,
         ]);
+
+        // Demo tenant — only in local/staging environments
+        if (app()->environment('local', 'staging')) {
+            $this->call(TenantSeeder::class);
+        }
     }
 }
