@@ -20,6 +20,7 @@ class WorkspaceNameResolver
         return [
             '{client_id}',
             '{matter_id}',
+            '{client_name}',
             '{client_description}',
             '{matter_description}',
             '{display_number}',
@@ -33,11 +34,14 @@ class WorkspaceNameResolver
 
     public function replaceTokens(string $template, array $context): string
     {
+        $clientDesc = $context['client_description'] ?? '';
+
         // Replace simple tokens
         $simple = [
             '{client_id}' => $context['client_id'] ?? '',
             '{matter_id}' => $context['matter_id'] ?? '',
-            '{client_description}' => $context['client_description'] ?? '',
+            '{client_name}' => $clientDesc,
+            '{client_description}' => $clientDesc,
             '{matter_description}' => $context['matter_description'] ?? '',
             '{display_number}' => $context['display_number'] ?? '',
             '{practice_area}' => $context['practice_area'] ?? '',
