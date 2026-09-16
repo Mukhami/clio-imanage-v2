@@ -16,6 +16,7 @@ use App\Integrations\Clio\Requests\GetMatter;
 use App\Integrations\Clio\Requests\GetMatters;
 use App\Integrations\Clio\Requests\GetPracticeAreas;
 use App\Integrations\Clio\Requests\GetUsers;
+use App\Integrations\Clio\Requests\GetWebhook;
 use App\Integrations\Clio\Requests\GetWebhooks;
 use App\Integrations\Clio\Requests\PatchMatter;
 use App\Integrations\Clio\Requests\RenewWebhook;
@@ -100,6 +101,14 @@ class ClioApiService
         $response->throw();
 
         return $response->json();
+    }
+
+    public function getWebhook(int $id): array
+    {
+        $response = $this->connector->send(new GetWebhook($id));
+        $response->throw();
+
+        return $response->json('data', []);
     }
 
     public function getWebhooks(): array
