@@ -41,7 +41,7 @@
 
                     <flux:field>
                         <flux:label>Clio Location</flux:label>
-                        <flux:select wire:model="clioLocationId">
+                        <flux:select wire:model.live="clioLocationId">
                             <option value="">Choose a location...</option>
                             @foreach ($this->clioLocations as $location)
                                 <option value="{{ $location->id }}">{{ $location->name }} ({{ $location->region->value ?? $location->region }})</option>
@@ -61,7 +61,7 @@
             </div>
             <div class="p-6">
                 <flux:callout variant="info" icon="information-circle" class="mb-5 text-xs">
-                    Defaulted from the system <code>CLIO_APP_KEY</code> / <code>CLIO_APP_SECRET</code> environment variables. Override below if this tenant uses different credentials.
+                    Auto-populated from the region credentials when a Clio Location is selected. Override below if this tenant uses different credentials.
                 </flux:callout>
                 <div class="grid grid-cols-3 gap-x-6 gap-y-5 items-start">
                     <flux:field>

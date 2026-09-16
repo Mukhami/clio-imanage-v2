@@ -41,7 +41,7 @@
 
                     <flux:field>
                         <flux:label>Clio Location</flux:label>
-                        <flux:select wire:model="clioLocationId">
+                        <flux:select wire:model.live="clioLocationId">
                             <option value="">Choose a location...</option>
                             @foreach ($this->clioLocations as $location)
                                 <option value="{{ $location->id }}">{{ $location->name }} ({{ $location->region->value ?? $location->region }})</option>

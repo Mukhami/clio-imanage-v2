@@ -36,9 +36,29 @@ return [
     ],
 
     'clio' => [
-        'key'          => env('CLIO_APP_KEY'),
-        'secret'       => env('CLIO_APP_SECRET'),
         'redirect_uri' => env('CLIO_REDIRECT_URI', 'http://localhost:8000/oauth/clio/callback'),
+        'regions' => [
+            'US' => [
+                'key'              => env('CLIO_APP_US_KEY'),
+                'secret'           => env('CLIO_APP_US_SECRET'),
+                'secondary_secret' => env('CLIO_APP_US_SECONDARY_SECRET'),
+            ],
+            'EU' => [
+                'key'              => env('CLIO_APP_EU_KEY'),
+                'secret'           => env('CLIO_APP_EU_SECRET'),
+                'secondary_secret' => env('CLIO_APP_EU_SECONDARY_SECRET'),
+            ],
+            'CA' => [
+                'key'              => env('CLIO_APP_CA_KEY'),
+                'secret'           => env('CLIO_APP_CA_SECRET'),
+                'secondary_secret' => env('CLIO_APP_CA_SECONDARY_SECRET'),
+            ],
+            'AU' => [
+                'key'              => env('CLIO_APP_AU_KEY'),
+                'secret'           => env('CLIO_APP_AU_SECRET'),
+                'secondary_secret' => env('CLIO_APP_AU_SECONDARY_SECRET'),
+            ],
+        ],
     ],
 
     'imanage' => [

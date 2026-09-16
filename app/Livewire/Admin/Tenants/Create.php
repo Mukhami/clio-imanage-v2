@@ -67,11 +67,20 @@ class Create extends Component
 
     public function mount(): void
     {
-        $this->clioAppId        = (string) config('services.clio.key', '');
-        $this->clioAppSecret    = (string) config('services.clio.secret', '');
         $this->imanageCloudUrl  = (string) config('services.imanage.api_url', '');
         $this->imanageAppId     = (string) config('services.imanage.app_key', '');
         $this->imanageAppSecret = (string) config('services.imanage.app_secret', '');
+    }
+
+    public function updatedClioLocationId(string $value): void
+    {
+        $location = ClioLocation::find($value);
+
+        if ($location && $location->region) {
+            $region = $location->region->value;
+            $this->clioAppId     = (string) config("services.clio.regions.{$region}.key", '');
+            $this->clioAppSecret = (string) config("services.clio.regions.{$region}.secret", '');
+        }
     }
 
     public function updatingName(string $value): void

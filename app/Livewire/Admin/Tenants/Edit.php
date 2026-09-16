@@ -82,6 +82,17 @@ class Edit extends Component
         $this->enableWorkspaceLinkCustomField  = (bool) $this->tenant->enable_workspace_link_custom_field;
     }
 
+    public function updatedClioLocationId(string $value): void
+    {
+        $location = ClioLocation::find($value);
+
+        if ($location && $location->region) {
+            $region = $location->region->value;
+            $this->clioAppId     = (string) config("services.clio.regions.{$region}.key", '');
+            $this->clioAppSecret = (string) config("services.clio.regions.{$region}.secret", '');
+        }
+    }
+
     public function testImanageCredentials(): void
     {
         $this->validate([
