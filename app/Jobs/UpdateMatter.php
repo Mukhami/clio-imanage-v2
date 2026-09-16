@@ -141,6 +141,7 @@ class UpdateMatter implements ShouldQueue
             $config  = new TenantConfigurationService($tenant);
 
             // 9. Resolve practice area mapping
+            $clioPracticeArea       = null;
             $imanagePracticeArea    = null;
             $imanageSubPracticeArea = null;
 
@@ -262,7 +263,7 @@ class UpdateMatter implements ShouldQueue
                         'closed'                  => $clioMatterStatus === 'Closed',
                         'clio_client_id'          => $internalClioClientId,
                         'clio_matter_id'          => $internalClioMatterId,
-                        'clio_practice_area_id'   => $clioPracticeAreaId,
+                        'clio_practice_area_id'   => $clioPracticeArea?->id,
                         'iman_practice_area_id'   => $imanagePracticeArea?->id,
                         'iman_sub_practice_area_id' => $imanageSubPracticeArea?->id,
                         'parent_id'               => $matterData['parent']['id'] ?? null,
