@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\ProcessingStage;
+use App\Models\ClioClient;
+use App\Models\ClioMatter;
 use App\Models\ClioPracticeArea;
 use App\Models\ImanageClient;
 use App\Models\ImanageMatter;
@@ -191,7 +193,16 @@ class UpdateMatter implements ShouldQueue
                 'client_id'          => $wr->retrieved_client_id,
             ]);
 
-            // 13. Find/create client in iManage
+            // 13. Resolve internal ClioClient and ClioMatter record IDs for FK references
+            $internalClioClientId = $clioClientId
+                ? ClioClient::where('tenant_id', $tenant->id)->where('clio_id', $clioClientId)->value('id')
+                : null;
+
+            $internalClioMatterId = $clioMatterId
+                ? ClioMatter::where('tenant_id', $tenant->id)->where('clio_id', $clioMatterId)->value('id')
+                : null;
+
+            // 14. Find/create client in iManage
             $clientData = $imanage->findOrUpsertClient(
                 $customerId,
                 $libraryId,
@@ -213,7 +224,7 @@ class UpdateMatter implements ShouldQueue
                     'enabled'            => $clientData['enabled'] ?? ($setting->default_enabled ?? true),
                     'hipaa'              => $clientData['hipaa'] ?? ($setting->default_hipaa ?? false),
                     'wstype'             => $clientData['wstype'] ?? null,
-                    'clio_client_id'     => $clioClientId,
+                    'clio_client_id'     => $internalClioClientId,
                     'webhook_request_id' => $wr->id,
                 ],
             );
@@ -249,8 +260,8 @@ class UpdateMatter implements ShouldQueue
                         'hipaa'                   => $matterData['hipaa'] ?? ($setting->default_hipaa ?? false),
                         'wstype'                  => $matterData['wstype'] ?? null,
                         'closed'                  => $clioMatterStatus === 'Closed',
-                        'clio_client_id'          => $clioClientId,
-                        'clio_matter_id'          => $clioMatterId,
+                        'clio_client_id'          => $internalClioClientId,
+                        'clio_matter_id'          => $internalClioMatterId,
                         'clio_practice_area_id'   => $clioPracticeAreaId,
                         'iman_practice_area_id'   => $imanagePracticeArea?->id,
                         'iman_sub_practice_area_id' => $imanageSubPracticeArea?->id,
