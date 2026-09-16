@@ -163,7 +163,11 @@ class Show extends Component
                 'webhook_type_id' => $webhookTypeId,
                 'url'             => $url,
                 'shared_secret'   => $sharedSecret,
-                'status'          => $details['status'] ?? 'active',
+                'status'          => match($details['status'] ?? null) {
+                    'enabled'  => 'active',
+                    'disabled' => 'failed',
+                    default    => 'active',
+                },
                 'expires_at'      => isset($details['expires_at']) ? \Carbon\Carbon::parse($details['expires_at']) : null,
                 'etag'            => $data['etag'] ?? null,
             ]);

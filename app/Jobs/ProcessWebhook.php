@@ -57,12 +57,8 @@ class ProcessWebhook implements ShouldQueue
 
         // 2. Load the Webhook model matching tenant + Clio webhook ID
         $webhook = Webhook::where('tenant_id', $this->tenantId)
-            ->where('clio_id', $this->webhookId)
+            ->when($this->webhookId !== '', fn ($q) => $q->where('clio_id', $this->webhookId))
             ->first();
-
-        if ($webhook === null) {
-            return;
-        }
 
         // Initialise $webhookRequest outside try so the catch block can reference it
         $webhookRequest = null;

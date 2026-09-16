@@ -20,6 +20,6 @@ class GetWebhook extends Request
 
     protected function defaultQuery(): array
     {
-        return ['fields' => 'id,url,model,events,status,expires_at,updated_at'];
+        return ['fields' => 'id,url,model,events,status,shared_secret,expires_at,updated_at'];
     }
 }
