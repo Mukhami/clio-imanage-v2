@@ -10,17 +10,21 @@ class WebhookTypesSeeder extends Seeder
     public function run(): void
     {
         $types = [
-            ['name' => 'Matter Created',  'model' => 'Matter', 'event' => 'created'],
-            ['name' => 'Matter Updated',  'model' => 'Matter', 'event' => 'updated'],
-            ['name' => 'Matter Deleted',  'model' => 'Matter', 'event' => 'deleted'],
-            ['name' => 'Matter Closed',   'model' => 'Matter', 'event' => 'matter_closed'],
+            ['name' => 'Matter Created',  'model' => 'matter', 'event' => 'created'],
+            ['name' => 'Matter Updated',  'model' => 'matter', 'event' => 'updated'],
+            ['name' => 'Matter Deleted',  'model' => 'matter', 'event' => 'deleted'],
+            ['name' => 'Matter Closed',   'model' => 'matter', 'event' => 'matter_closed'],
         ];
 
         foreach ($types as $type) {
-            WebhookType::firstOrCreate(
+            WebhookType::updateOrCreate(
                 ['model' => $type['model'], 'event' => $type['event']],
                 ['name' => $type['name']],
             );
         }
+
+        // Fix any legacy rows that have capitalised model values (e.g. 'Matter' → 'matter')
+        WebhookType::where('model', 'Matter')->update(['model' => 'matter']);
+        WebhookType::where('model', 'Contact')->update(['model' => 'contact']);
     }
 }

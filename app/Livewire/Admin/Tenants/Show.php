@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Tenants;
 
+use App\Jobs\RenewWebhookRegistration;
 use App\Jobs\SyncClioData;
 use App\Jobs\SyncImanageLibraries;
 use App\Models\Tenant;
@@ -120,36 +121,90 @@ class Show extends Component
         }
 
         try {
-            $clio         = new ClioApiService($this->tenant);
-            $sharedSecret = Str::random(64);
-            $url          = route('webhook.receive', $this->tenant->reference);
+            $clio = new ClioApiService($this->tenant);
+            $url  = app()->isLocal()
+                ? rtrim(config('app.url'), '/') . '/webhook/' . $this->tenant->reference
+                : route('webhook.receive', $this->tenant->reference);
 
             $response = $clio->createWebhook([
                 'data' => [
-                    'url'           => $url,
-                    'model'         => $webhookType->model,
-                    'events'        => [$webhookType->event],
-                    'shared_secret' => $sharedSecret,
+                    'url'    => $url,
+                    'model'  => strtolower($webhookType->model),
+                    'events' => [$webhookType->event],
+                    'fields' => implode(',', [
+                        'id',
+                        'display_number',
+                        'description',
+                        'status',
+                        'open_date',
+                        'close_date',
+                        'practice_area',
+                        'client',
+                        'responsible_attorney',
+                        'originating_attorney',
+                        'custom_field_values',
+                        'matter_stage',
+                        'group',
+                        'location',
+                    ]),
                 ],
             ]);
 
-            $data = $response['data'] ?? [];
+            $data    = $response['data'] ?? [];
+            $clioId  = $data['id'];
 
-            Webhook::create([
+            // Clio generates and owns the shared_secret — fetch it immediately after creation
+            $details      = $clio->getWebhook($clioId);
+            $sharedSecret = $details['shared_secret'] ?? '';
+
+            $createdWebhook = Webhook::create([
                 'tenant_id'       => $this->tenant->id,
-                'clio_id'         => $data['id'],
+                'clio_id'         => $clioId,
                 'webhook_type_id' => $webhookTypeId,
-                'url'             => $data['url'],
+                'url'             => $url,
                 'shared_secret'   => $sharedSecret,
-                'status'          => $data['status'] ?? 'active',
-                'expires_at'      => isset($data['expires_at']) ? \Carbon\Carbon::parse($data['expires_at']) : null,
+                'status'          => $details['status'] ?? 'active',
+                'expires_at'      => isset($details['expires_at']) ? \Carbon\Carbon::parse($details['expires_at']) : null,
                 'etag'            => $data['etag'] ?? null,
             ]);
+
+            RenewWebhookRegistration::dispatchFor($createdWebhook);
 
             Flux::toast(text: "{$webhookType->name} webhook registered.", variant: 'success');
         } catch (\Throwable $e) {
             Log::error("Failed to register webhook for tenant {$this->tenant->id}: {$e->getMessage()}");
             Flux::toast(text: 'Failed to register webhook: ' . $e->getMessage(), variant: 'danger');
+        }
+
+        unset($this->tenantWebhooks);
+    }
+
+    public function checkWebhookStatus(int $webhookId): void
+    {
+        $webhook = $this->tenant->webhooks()->findOrFail($webhookId);
+
+        try {
+            $clio = new ClioApiService($this->tenant);
+            $data = $clio->getWebhook($webhook->clio_id);
+
+            $clioStatus = $data['status'] ?? null;
+            $status = match($clioStatus) {
+                'enabled'  => \App\Enums\WebhookStatus::Active,
+                'disabled' => \App\Enums\WebhookStatus::Failed,
+                default    => $webhook->status,
+            };
+
+            $webhook->update([
+                'status'     => $status,
+                'expires_at' => isset($data['expires_at']) ? \Carbon\Carbon::parse($data['expires_at']) : $webhook->expires_at,
+                'etag'       => $data['etag'] ?? $webhook->etag,
+            ]);
+
+            RenewWebhookRegistration::dispatchFor($webhook);
+
+            Flux::toast(text: "Clio reports webhook as: {$clioStatus}.", variant: 'success');
+        } catch (\Throwable $e) {
+            Flux::toast(text: 'Failed to fetch webhook status: ' . $e->getMessage(), variant: 'danger');
         }
 
         unset($this->tenantWebhooks);
