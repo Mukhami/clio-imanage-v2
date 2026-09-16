@@ -109,7 +109,7 @@ class AuditWorkspaceSecurity implements ShouldQueue
                     'template_security'     => $templateSecurity,
                     'target_security'       => $targetSecurity,
                     'diff'                  => $diff,
-                    'status'                => $auditPassed ? 'passed' : 'failed',
+                    'status'                => $auditPassed ? 'match' : 'mismatch',
                     'resolved_at'           => $auditPassed ? now() : null,
                 ],
             );
