@@ -64,16 +64,21 @@ class AuditWorkspaceSecurity implements ShouldQueue
         $customerId = (string) $tenant->imanage_customer_id;
 
         $resolvedWorkspaceId = $this->targetWorkspaceId;
+        $workspace = null;
 
-        if (! $resolvedWorkspaceId) {
+        if ($resolvedWorkspaceId) {
+            $workspace = ImanageWorkspace::where('imanage_workspace_id', $resolvedWorkspaceId)
+                ->where('tenant_id', $tenant->id)
+                ->where('replica', false)
+                ->first();
+        } else {
             $workspace = ImanageWorkspace::where('webhook_request_id', $wr->id)
                 ->where('replica', false)
                 ->first();
-
             $resolvedWorkspaceId = $workspace?->imanage_workspace_id;
         }
 
-        if (! $resolvedWorkspaceId) {
+        if (! $workspace || ! $resolvedWorkspaceId) {
             throw new RuntimeException("No target workspace found for WebhookRequest {$wr->id}");
         }
 

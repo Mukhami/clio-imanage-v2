@@ -45,20 +45,22 @@ class WebhookController extends Controller
         $payload       = json_decode($rawPayload, true);
         $payloadHash   = hash('sha256', $rawPayload);
         $clioWebhookId = data_get($payload, 'meta.webhook_id');
+        $clioMatterId  = data_get($payload, 'data.id');
 
         $webhook = Webhook::where('tenant_id', $tenant->id)
             ->where('status', 'active')
             ->when($clioWebhookId, fn ($q) => $q->where('clio_id', $clioWebhookId))
             ->first();
 
-        // Deduplication: skip if an identical payload was received for this tenant within the last 30 seconds
-        $duplicate = WebhookRequest::where('tenant_id', $tenant->id)
-            ->where('payload_hash', $payloadHash)
+        // Deduplication: skip if we already received a webhook for the same matter within 30 seconds
+        // Clio fires multiple events (with different correlation IDs) for a single matter change
+        $duplicate = $clioMatterId && WebhookRequest::where('tenant_id', $tenant->id)
+            ->where('clio_matter_id', $clioMatterId)
             ->where('created_at', '>=', now()->subSeconds(30))
+            ->whereNotIn('processing_stage', [ProcessingStage::Skipped->value, ProcessingStage::Failed->value])
             ->exists();
 
         if ($duplicate) {
-            // Still record it for visibility, but mark as skipped immediately
             WebhookRequest::create([
                 'tenant_id'        => $tenant->id,
                 'webhook_id'       => $webhook?->id,
@@ -67,8 +69,9 @@ class WebhookController extends Controller
                 'body'             => $payload,
                 'payload_hash'     => $payloadHash,
                 'correlation_id'   => $correlationId,
+                'clio_matter_id'   => $clioMatterId,
                 'processing_stage' => ProcessingStage::Skipped,
-                'skip_reason'      => 'Duplicate payload received within 30 seconds.',
+                'skip_reason'      => "Duplicate webhook for matter {$clioMatterId} received within 30 seconds.",
                 'completed_at'     => now(),
             ]);
 
@@ -84,6 +87,7 @@ class WebhookController extends Controller
             'body'             => $payload,
             'payload_hash'     => $payloadHash,
             'correlation_id'   => $correlationId,
+            'clio_matter_id'   => $clioMatterId,
             'processing_stage' => ProcessingStage::Received,
             'started_at'       => now(),
         ]);

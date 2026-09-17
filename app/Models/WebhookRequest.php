@@ -19,6 +19,7 @@ class WebhookRequest extends Model
         'body',
         'payload_hash',
         'correlation_id',
+        'clio_matter_id',
         'processing_stage',
         'retrieved_client_id',
         'retrieved_matter_id',
