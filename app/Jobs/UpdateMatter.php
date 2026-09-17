@@ -515,8 +515,7 @@ class UpdateMatter implements ShouldQueue
                 $wasCreated       = true;
 
                 // Dispatch folder creation job for newly created workspaces
-                CreateWorkspaceFolders::dispatch($wr->id, $tenant->id)
-                    ;
+                CreateWorkspaceFolders::dispatch($wr->id, $tenant->id, $createdWorkspace->imanage_workspace_id);
             }
 
             $wr->workspace_activity_complete = true;
@@ -588,16 +587,17 @@ class UpdateMatter implements ShouldQueue
                 ImanageWorkspace::create($replicaAttributes);
             }
 
-            // 21. Dispatch downstream jobs
+            // 21. Dispatch downstream jobs — pass the workspace ID directly
+            $imanageWorkspaceId = $updatedWorkspace?->imanage_workspace_id;
+
             if ($tenant->has_group_security_mapping) {
-                ApplyGroupSecurityMapping::dispatch($wr->id, $tenant->id);
+                ApplyGroupSecurityMapping::dispatch($wr->id, $tenant->id, $imanageWorkspaceId);
             } else {
-                PostWorkspaceSecurity::dispatch($wr->id, $tenant->id);
+                PostWorkspaceSecurity::dispatch($wr->id, $tenant->id, $imanageWorkspaceId);
             }
 
             if ($tenant->enable_workspace_link_custom_field) {
-                PopulateWorkspaceLinkCustomField::dispatch($wr->id)
-                    ;
+                PopulateWorkspaceLinkCustomField::dispatch($wr->id, $imanageWorkspaceId);
             }
 
             $wr->processing_stage = ProcessingStage::PostProcessing;

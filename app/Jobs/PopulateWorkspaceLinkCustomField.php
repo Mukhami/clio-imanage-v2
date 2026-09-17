@@ -26,6 +26,7 @@ class PopulateWorkspaceLinkCustomField implements ShouldQueue
 
     public function __construct(
         public readonly int $webhookRequestId,
+        public readonly ?string $targetWorkspaceId = null,
     ) {
     }
 
@@ -58,10 +59,19 @@ class PopulateWorkspaceLinkCustomField implements ShouldQueue
             throw new RuntimeException("workspace_link_custom_field_name not configured for tenant {$tenant->id}");
         }
 
-        // Find the non-replica workspace created/updated for this request
-        $workspace = ImanageWorkspace::where('webhook_request_id', $wr->id)
-            ->where('replica', false)
-            ->first();
+        // Resolve target workspace — prefer directly-passed ID, fall back to DB lookup
+        $resolvedWorkspaceId = $this->targetWorkspaceId;
+
+        if ($resolvedWorkspaceId) {
+            $workspace = ImanageWorkspace::where('imanage_workspace_id', $resolvedWorkspaceId)
+                ->where('tenant_id', $tenant->id)
+                ->where('replica', false)
+                ->first();
+        } else {
+            $workspace = ImanageWorkspace::where('webhook_request_id', $wr->id)
+                ->where('replica', false)
+                ->first();
+        }
 
         if (! $workspace || ! $workspace->imanage_workspace_id) {
             throw new RuntimeException("No target workspace found for WebhookRequest {$wr->id}");

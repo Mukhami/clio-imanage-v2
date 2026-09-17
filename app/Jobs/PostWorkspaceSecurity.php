@@ -29,6 +29,7 @@ class PostWorkspaceSecurity implements ShouldQueue
     public function __construct(
         public readonly int $webhookRequestId,
         public readonly int $tenantId,
+        public readonly ?string $targetWorkspaceId = null,
     ) {
     }
 
@@ -61,16 +62,22 @@ class PostWorkspaceSecurity implements ShouldQueue
         $libraryId  = $library->imanage_library_id;
         $customerId = (string) $tenant->imanage_customer_id;
 
-        // Find the non-replica workspace for this request
-        $workspace = ImanageWorkspace::where('webhook_request_id', $wr->id)
-            ->where('replica', false)
-            ->first();
+        // Resolve target workspace — prefer the directly-passed ID, fall back to DB lookup
+        $resolvedWorkspaceId = $this->targetWorkspaceId;
 
-        if (! $workspace || ! $workspace->imanage_workspace_id) {
+        if (! $resolvedWorkspaceId) {
+            $workspace = ImanageWorkspace::where('webhook_request_id', $wr->id)
+                ->where('replica', false)
+                ->first();
+
+            $resolvedWorkspaceId = $workspace?->imanage_workspace_id;
+        }
+
+        if (! $resolvedWorkspaceId) {
             throw new RuntimeException("No target workspace found for WebhookRequest {$wr->id}");
         }
 
-        $targetWorkspaceId = $workspace->imanage_workspace_id;
+        $targetWorkspaceId = $resolvedWorkspaceId;
 
         $imanage = new ImanageApiService($tenant);
 
@@ -146,7 +153,7 @@ class PostWorkspaceSecurity implements ShouldQueue
             $wr->security_activity_complete = true;
             $wr->save();
 
-            AuditWorkspaceSecurity::dispatch($wr->id, $tenant->id)
+            AuditWorkspaceSecurity::dispatch($wr->id, $tenant->id, $targetWorkspaceId)
                 ;
 
         } catch (Throwable $e) {

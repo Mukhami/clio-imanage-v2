@@ -33,6 +33,7 @@ class ApplyGroupSecurityMapping implements ShouldQueue
     public function __construct(
         public readonly int $webhookRequestId,
         public readonly int $tenantId,
+        public readonly ?string $targetWorkspaceId = null,
     ) {}
 
     public function backoff(): array
@@ -64,15 +65,21 @@ class ApplyGroupSecurityMapping implements ShouldQueue
         $libraryId  = $library->imanage_library_id;
         $customerId = (string) $tenant->imanage_customer_id;
 
-        $workspace = ImanageWorkspace::where('webhook_request_id', $wr->id)
-            ->where('replica', false)
-            ->first();
+        $resolvedWorkspaceId = $this->targetWorkspaceId;
 
-        if (! $workspace || ! $workspace->imanage_workspace_id) {
+        if (! $resolvedWorkspaceId) {
+            $workspace = ImanageWorkspace::where('webhook_request_id', $wr->id)
+                ->where('replica', false)
+                ->first();
+
+            $resolvedWorkspaceId = $workspace?->imanage_workspace_id;
+        }
+
+        if (! $resolvedWorkspaceId) {
             throw new RuntimeException("No target workspace found for WebhookRequest {$wr->id}");
         }
 
-        $targetWorkspaceId = $workspace->imanage_workspace_id;
+        $targetWorkspaceId = $resolvedWorkspaceId;
         $imanage           = new ImanageApiService($tenant);
 
         try {
@@ -143,7 +150,7 @@ class ApplyGroupSecurityMapping implements ShouldQueue
 
             Log::info("ApplyGroupSecurityMapping: WebhookRequest [{$wr->id}] — applied=" . ($securityApplied ? 'yes' : 'no') . ', mapped=' . count($mappedEntries) . ', unmapped=' . count($unmappedEntries));
 
-            AuditWorkspaceSecurity::dispatch($wr->id, $tenant->id);
+            AuditWorkspaceSecurity::dispatch($wr->id, $tenant->id, $targetWorkspaceId);
 
         } catch (Throwable $e) {
             Log::error("ApplyGroupSecurityMapping: failed for tenant [{$tenant->name}] — {$e->getMessage()}", [

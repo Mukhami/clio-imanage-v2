@@ -29,6 +29,7 @@ class CreateWorkspaceFolders implements ShouldQueue
     public function __construct(
         public readonly int $webhookRequestId,
         public readonly int $tenantId,
+        public readonly ?string $targetWorkspaceId = null,
     ) {
     }
 
@@ -61,12 +62,23 @@ class CreateWorkspaceFolders implements ShouldQueue
         $libraryId  = $library->imanage_library_id;
         $customerId = (string) $tenant->imanage_customer_id;
 
-        // Find the non-replica workspace created for this webhook request
-        $workspace = ImanageWorkspace::where('webhook_request_id', $wr->id)
-            ->where('replica', false)
-            ->first();
+        // Resolve target workspace — prefer directly-passed ID, fall back to DB lookup
+        $resolvedWorkspaceId = $this->targetWorkspaceId;
+        $workspace = null;
 
-        if (! $workspace || ! $workspace->imanage_workspace_id) {
+        if ($resolvedWorkspaceId) {
+            $workspace = ImanageWorkspace::where('imanage_workspace_id', $resolvedWorkspaceId)
+                ->where('tenant_id', $tenant->id)
+                ->where('replica', false)
+                ->first();
+        } else {
+            $workspace = ImanageWorkspace::where('webhook_request_id', $wr->id)
+                ->where('replica', false)
+                ->first();
+            $resolvedWorkspaceId = $workspace?->imanage_workspace_id;
+        }
+
+        if (! $workspace || ! $resolvedWorkspaceId) {
             throw new RuntimeException("No target workspace found for WebhookRequest {$wr->id}");
         }
 

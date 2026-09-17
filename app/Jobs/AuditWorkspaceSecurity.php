@@ -30,6 +30,7 @@ class AuditWorkspaceSecurity implements ShouldQueue
     public function __construct(
         public readonly int $webhookRequestId,
         public readonly int $tenantId,
+        public readonly ?string $targetWorkspaceId = null,
     ) {
     }
 
@@ -62,15 +63,21 @@ class AuditWorkspaceSecurity implements ShouldQueue
         $libraryId  = $library->imanage_library_id;
         $customerId = (string) $tenant->imanage_customer_id;
 
-        $workspace = ImanageWorkspace::where('webhook_request_id', $wr->id)
-            ->where('replica', false)
-            ->first();
+        $resolvedWorkspaceId = $this->targetWorkspaceId;
 
-        if (! $workspace || ! $workspace->imanage_workspace_id) {
+        if (! $resolvedWorkspaceId) {
+            $workspace = ImanageWorkspace::where('webhook_request_id', $wr->id)
+                ->where('replica', false)
+                ->first();
+
+            $resolvedWorkspaceId = $workspace?->imanage_workspace_id;
+        }
+
+        if (! $resolvedWorkspaceId) {
             throw new RuntimeException("No target workspace found for WebhookRequest {$wr->id}");
         }
 
-        $targetWorkspaceId = $workspace->imanage_workspace_id;
+        $targetWorkspaceId = $resolvedWorkspaceId;
         $imanage           = new ImanageApiService($tenant);
 
         try {
