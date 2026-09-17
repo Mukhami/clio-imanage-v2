@@ -198,7 +198,10 @@
     <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 mb-6">
         <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
             <flux:heading size="sm" class="uppercase tracking-wider text-zinc-500">Webhooks</flux:heading>
-            <flux:text class="text-xs text-zinc-400 font-mono">{{ route('webhook.receive', $tenant->reference) }}</flux:text>
+            <div class="flex items-center gap-3">
+                <flux:text class="text-xs text-zinc-400 font-mono">{{ route('webhook.receive', $tenant->reference) }}</flux:text>
+                <flux:button size="xs" variant="ghost" wire:click="syncWebhooks" icon="arrow-path">Sync with Clio</flux:button>
+            </div>
         </div>
         @if ($this->webhookTypes->isEmpty())
             <div class="px-6 py-4">
@@ -514,4 +517,79 @@
             </div>
         @endif
     </div>
+
+    {{-- Webhook Sync Modal --}}
+    <flux:modal wire:model="showSyncModal" class="w-full max-w-4xl">
+        <div class="space-y-4">
+            <div>
+                <flux:heading size="lg">Webhook Sync — Clio vs Local</flux:heading>
+                <flux:text class="text-zinc-500">Webhooks registered in Clio for this tenant. Duplicates are highlighted.</flux:text>
+            </div>
+
+            @if (empty($clioWebhooks))
+                <flux:text class="text-zinc-400">No webhooks found in Clio.</flux:text>
+            @else
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-zinc-100 dark:divide-zinc-800 text-sm">
+                        <thead>
+                            <tr class="bg-zinc-50 dark:bg-zinc-800/50">
+                                <th class="px-4 py-2 text-left text-xs font-medium text-zinc-500 uppercase">Clio ID</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-zinc-500 uppercase">Model</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-zinc-500 uppercase">Events</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-zinc-500 uppercase">Clio Status</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-zinc-500 uppercase">Local</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-zinc-500 uppercase">Flags</th>
+                                <th class="px-4 py-2"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                            @foreach ($clioWebhooks as $cw)
+                                <tr class="{{ $cw['is_duplicate'] ? 'bg-amber-50 dark:bg-amber-900/20' : '' }}">
+                                    <td class="px-4 py-2 font-mono text-zinc-600 dark:text-zinc-400">{{ $cw['clio_id'] }}</td>
+                                    <td class="px-4 py-2 text-zinc-900 dark:text-white">{{ $cw['model'] }}</td>
+                                    <td class="px-4 py-2 text-zinc-600 dark:text-zinc-400">{{ $cw['events'] }}</td>
+                                    <td class="px-4 py-2">
+                                        <flux:badge size="sm" :color="$cw['status'] === 'enabled' ? 'green' : ($cw['status'] === 'NOT IN CLIO' ? 'red' : 'zinc')">
+                                            {{ $cw['status'] }}
+                                        </flux:badge>
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        @if ($cw['in_local_db'])
+                                            <flux:badge size="sm" color="blue">{{ $cw['local_status'] }}</flux:badge>
+                                        @else
+                                            <span class="text-zinc-400 text-xs">Not tracked</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        @if ($cw['is_duplicate'])
+                                            <flux:badge size="sm" color="amber">Duplicate</flux:badge>
+                                        @endif
+                                        @if ($cw['status'] === 'NOT IN CLIO')
+                                            <flux:badge size="sm" color="red">Orphan</flux:badge>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-2 text-right">
+                                        @if ($cw['is_duplicate'] || $cw['status'] === 'NOT IN CLIO')
+                                            <flux:button
+                                                size="xs"
+                                                variant="danger"
+                                                wire:click="deleteDuplicateWebhook({{ $cw['clio_id'] }})"
+                                                wire:confirm="Delete webhook {{ $cw['clio_id'] }} from Clio?"
+                                            >
+                                                Delete
+                                            </flux:button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+
+            <div class="flex justify-end pt-2">
+                <flux:button variant="ghost" wire:click="$set('showSyncModal', false)">Close</flux:button>
+            </div>
+        </div>
+    </flux:modal>
 </div>

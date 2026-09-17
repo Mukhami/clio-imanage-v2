@@ -109,6 +109,101 @@ class Show extends Component
     }
 
     // -------------------------------------------------------------------------
+    // Webhook Sync
+    // -------------------------------------------------------------------------
+
+    public array $clioWebhooks = [];
+
+    public bool $showSyncModal = false;
+
+    public function syncWebhooks(): void
+    {
+        try {
+            $clio = new ClioApiService($this->tenant);
+            $response = $clio->getWebhooks();
+            $clioList = data_get($response, 'data', []);
+
+            $localWebhooks = $this->tenant->webhooks()->with('webhookType')->get();
+            $localByClioId = $localWebhooks->keyBy('clio_id');
+
+            // Group Clio webhooks by model+events to detect duplicates
+            $grouped = [];
+            foreach ($clioList as $cw) {
+                $key = ($cw['model'] ?? '') . ':' . implode(',', (array) ($cw['events'] ?? []));
+                $grouped[$key][] = $cw;
+            }
+
+            $results = [];
+            foreach ($clioList as $cw) {
+                $clioId = $cw['id'] ?? null;
+                $key = ($cw['model'] ?? '') . ':' . implode(',', (array) ($cw['events'] ?? []));
+                $local = $localByClioId->get($clioId);
+                $isDuplicate = count($grouped[$key] ?? []) > 1;
+
+                $results[] = [
+                    'clio_id'      => $clioId,
+                    'model'        => $cw['model'] ?? '—',
+                    'events'       => implode(', ', (array) ($cw['events'] ?? [])),
+                    'url'          => $cw['url'] ?? '—',
+                    'status'       => $cw['status'] ?? '—',
+                    'expires_at'   => $cw['expires_at'] ?? '—',
+                    'in_local_db'  => $local !== null,
+                    'local_status' => $local?->status?->value ?? '—',
+                    'is_duplicate' => $isDuplicate,
+                ];
+            }
+
+            // Find local webhooks not in Clio (orphaned locally)
+            $clioIds = collect($clioList)->pluck('id')->filter()->all();
+            foreach ($localWebhooks as $local) {
+                if (! in_array($local->clio_id, $clioIds)) {
+                    $results[] = [
+                        'clio_id'      => $local->clio_id,
+                        'model'        => $local->webhookType?->model ?? '—',
+                        'events'       => $local->webhookType?->event ?? '—',
+                        'url'          => $local->url ?? '—',
+                        'status'       => 'NOT IN CLIO',
+                        'expires_at'   => $local->expires_at?->format('Y-m-d') ?? '—',
+                        'in_local_db'  => true,
+                        'local_status' => $local->status?->value ?? '—',
+                        'is_duplicate' => false,
+                    ];
+                }
+            }
+
+            $this->clioWebhooks = $results;
+            $this->showSyncModal = true;
+
+        } catch (\Throwable $e) {
+            Log::error("Webhook sync failed for tenant {$this->tenant->id}: {$e->getMessage()}");
+            Flux::toast(text: 'Failed to sync webhooks: ' . $e->getMessage(), variant: 'danger');
+        }
+    }
+
+    public function deleteDuplicateWebhook(int $clioId): void
+    {
+        try {
+            $clio = new ClioApiService($this->tenant);
+            $clio->deleteWebhook($clioId);
+
+            // Also remove local record if exists
+            $this->tenant->webhooks()->where('clio_id', $clioId)->delete();
+
+            // Remove from the displayed list
+            $this->clioWebhooks = array_values(array_filter(
+                $this->clioWebhooks,
+                fn ($w) => $w['clio_id'] !== $clioId,
+            ));
+
+            Flux::toast(text: "Webhook {$clioId} deleted from Clio.", variant: 'success');
+
+            unset($this->tenantWebhooks);
+        } catch (\Throwable $e) {
+            Flux::toast(text: 'Failed to delete webhook: ' . $e->getMessage(), variant: 'danger');
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // Webhook Management
     // -------------------------------------------------------------------------
 
